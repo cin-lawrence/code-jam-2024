@@ -6,7 +6,6 @@ from .settings import settings
 
 def main() -> None:
     """Run the app."""
-    logging.basicConfig(level=logging.INFO)
     bot.run(settings.DISCORD_TOKEN)
 
 

@@ -6,7 +6,7 @@ from discord.interactions import Interaction
 
 from .settings import BotSettings, settings
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('discord.mybot')
 
 
 class Bot(commands.Bot):
@@ -19,7 +19,7 @@ class Bot(commands.Bot):
     async def on_ready(self) -> None:
         """Overriden method on_ready."""
         logger.warning(
-            "[bot] syncing commands into server %s",
+            "Syncing commands into server %s",
             self.settings.GUILD_ID,
         )
         await bot.tree.sync(guild=Object(id=settings.GUILD_ID))
