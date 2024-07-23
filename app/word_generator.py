@@ -45,10 +45,9 @@ class WordGenerator:
     def is_valid(self, word: str) -> bool:
         """Validate the word."""
         return (
-            "-" in word
-            or "_" in word
-            or len(word) <= self.WORD_LENGTH_MIN
-            or len(word) >= self.WORD_LENGTH_MAX
+            "-" not in word
+            and "_" not in word
+            and self.WORD_LENGTH_MIN <= len(word) <= self.WORD_LENGTH_MAX
         )
 
     def random(self) -> Word:
@@ -59,6 +58,6 @@ class WordGenerator:
         return Word(
             word=word,
             definition=synset.definition(),
-            synonyms=set(lambda lm: lm.name(), synset.lemmas()),
+            synonyms={lm.name() for lm in synset.lemmas()},
             usages=synset.examples(),
         )
