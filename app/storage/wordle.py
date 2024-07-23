@@ -34,6 +34,14 @@ class WordleRepo:
             wordle: Wordle | None = result.scalar()
             return wordle
 
+    async def get_by_user_id(self, user_id: str) -> Wordle | None:
+        """Get wordle by user id."""
+        async with self.db.create_session() as session:
+            stmt = select(Wordle).where(Wordle.user_id == user_id)
+            result = await session.execute(stmt)
+            wordle: Wordle | None = result.scalar()
+            return wordle
+
 
 # TODO: move this to a container
 wordle_repo = WordleRepo(database)
