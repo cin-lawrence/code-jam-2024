@@ -1,12 +1,15 @@
 from uuid import UUID
 
-from ..models.guess import Guess
-from .database import Database, database
-
 from sqlalchemy import select
+
+from app.models.guess import Guess
+
+from .database import Database, database
 
 
 class GuessRepo:
+    """Repository for interacting with Guess."""
+
     def __init__(self, db: Database) -> None:
         self.db: Database = db
 
@@ -16,6 +19,7 @@ class GuessRepo:
         result: str,
         wordle_id: UUID,
     ) -> Guess:
+        """Create a guess."""
         async with self.db.create_session() as session:
             guess = Guess(content=content, result=result, wordle_id=wordle_id)
             session.add(guess)
@@ -23,7 +27,8 @@ class GuessRepo:
             await session.refresh(guess)
             return guess
 
-    async def get_guess(self, id: UUID) -> Guess | None:
+    async def get(self, id: UUID) -> Guess | None:
+        """Get guess by id."""
         async with self.db.create_session() as session:
             stmt = select(Guess).where(Guess.id == id)
             result = await session.execute(stmt)

@@ -3,13 +3,12 @@ import logging
 
 from .bot import bot
 from .models.base import Base
-from .models.guess import Guess  # noqa: F401
-from .models.wordle import Wordle  # noqa: F401
 from .settings import settings
 from .storage.database import database
 
 
 async def init_db() -> None:
+    """Seeds the tables."""
     async with database.engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

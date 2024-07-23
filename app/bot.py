@@ -4,11 +4,12 @@ from discord import Client, Intents, Object
 from discord.ext import commands
 from discord.interactions import Interaction
 
-from settings import BotSettings, settings
+from .settings import BotSettings, settings
 
 logger = logging.getLogger(__name__)
 
 USERS = []
+
 
 class Bot(commands.Bot):
     """Overriden class for the default discord Bot."""
@@ -26,7 +27,9 @@ class Bot(commands.Bot):
         await bot.tree.sync(guild=Object(id=settings.GUILD_ID))
         logger.warning("DONE syncing commands!")
 
+
 bot = Bot(settings)
+
 
 @bot.tree.command(
     name="jam",
@@ -37,18 +40,22 @@ async def hello_world(interaction: Interaction[Client]) -> None:
     """Says hello world."""
     await interaction.response.send_message("Hello World!")
 
+
 @bot.tree.command(
     name="start-wordle",
     description="Start the wordle game",
     guild=Object(id=settings.GUILD_ID),
 )
 async def start_wordle(interaction: Interaction) -> None:
-    """The wordle game is started"""
+    """Start the wordle game."""
     if interaction.user.id in USERS:
-        await interaction.response.send_message("You already starts the wordle game\nPlease complete the current game to start a new game")
+        await interaction.response.send_message(
+            "You already starts the wordle game\nPlease complete the current game to start a new game",
+        )
     else:
         USERS.append(interaction.user.id)
         await interaction.response.send_message("Welcome to wordle")
+
 
 @bot.tree.command(
     name="guess",
@@ -56,11 +63,12 @@ async def start_wordle(interaction: Interaction) -> None:
     guild=Object(id=settings.GUILD_ID),
 )
 async def guess(interaction: Interaction, word: str) -> None:
-    """User guess the wordle"""
+    """User guess the wordle."""
     if interaction.user.id in USERS:
         await interaction.response.send_message(f"Your guess is {word}")
     else:
-        await interaction.response.send_message(f"Please start the wordle game before making a guess")
+        await interaction.response.send_message("Please start the wordle game before making a guess")
+
 
 @bot.tree.command(
     name="end-wordle",
@@ -68,10 +76,9 @@ async def guess(interaction: Interaction, word: str) -> None:
     guild=Object(id=settings.GUILD_ID),
 )
 async def end_wordle(interaction: Interaction) -> None:
-    """User end the current wordle game"""
+    """User end the current wordle game."""
     if interaction.user.id in USERS:
-        await interaction.response.send_message(f"The current game ends")
+        await interaction.response.send_message("The current game ends")
         USERS.remove(interaction.user.id)
     else:
-        await interaction.response.send_message(f"You are not in a game yet")
-
+        await interaction.response.send_message("You are not in a game yet")
