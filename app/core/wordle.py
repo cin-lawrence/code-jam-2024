@@ -1,94 +1,116 @@
 import asyncio
-import random
+import secrets
 from collections.abc import Generator
-from typing import Any
+from enum import IntEnum
+from typing import Any, Final
 
-from ..storage.wordle import wordle_repo
-from ..storage.guess import guess_repo
-
-
-def get_word(length: int | None = None) -> str:
-    """Get a word with specified length."""
-    if length is None:
-        length = random.randint(5, 15)
-
-    word = "foobar"
-
-    return word
+from app.storage.wordle import wordle_repo
 
 
-def color_for_guess(
-    guess: str | tuple[str] | list[str],
-    word: str | tuple[str] | list[str],
-) -> Generator[int, Any, Any]:
-    """Get the integer representing the status."""
-    if len(guess) > len(word) or len(guess) < len(word):
-        pass  # TODO
-    else:
-        for g_letter, w_letter in zip(guess, word, strict=False):
-            yield _get_color_code(g_letter, w_letter, word)
+class UnequalInLengthError(Exception):
+    """Guess and word are unequal in length."""
 
 
-def _get_color_code(guess_letter: str, word_letter: str, word: str) -> int:
-    """- ❤️  for wrong letter (4)
-    - 💛  for correct letter, wrong position (1)
-    - 💚  for correct letter, correct location (0)
-    - 💙  for deviated letter, correct position (2)
-    - 💜  for deviated letter, wrong position (3)
-    """
-    # A = 65
-    # Z = 90
-    guess_ascii = ord(guess_letter)
-    word_ascii = ord(word_letter)
+class MatchResult(IntEnum):
+    """Meaningful guess result."""
 
-    if guess_letter == word_letter:
-        return 0
-
-    if guess_letter in word:
-        return 1
-
-    if abs(guess_ascii - word_ascii) < 4:
-        return 2
-
-    if any(map(lambda x: abs(guess_ascii - ord(x)) < 4, word)):
-        return 3
-
-    return 4
+    CORRECT_LETTER_CORRECT_POSITION = 0
+    CORRECT_LETTER_WRONG_POSITION = 1
+    DEVIATED_LETTER_CORRECT_POSITION = 2
+    DEVIATED_LETTER_WRONG_POSITION = 3
+    WRONG_LETTER = 4
 
 
-def start_wordle(user_id: str, length: int | None = None) -> str:
-    """Start the wordle game by creating a new word and store in db."""
-    word = get_word(length)
-    asyncio.run(wordle_repo.create(word, user_id))
+class WordleGame:
+    """Represent a Wordle Game."""
 
-    return word
+    WORD_LENGTH_MIN: Final[int] = 5
+    WORD_LENGTH_MAX: Final[int] = 15
+    DEVIATED_THRESHOLD: Final[int] = 4
+
+    def _random_length(self) -> int:
+        return self.WORD_LENGTH_MIN + secrets.randbelow(
+            self.WORD_LENGTH_MAX - self.WORD_LENGTH_MIN + 1,
+        )
+
+    def gen_word(self, length: int | None = None) -> str:
+        """Generate a new word."""
+        length = length or self._random_length()
+        # TODO: remove the hardcoded word
+        word: str = "foobar"
+        return word
+
+    def _gen_color(
+        self,
+        guesschar: str,
+        wordchar: str,
+        word: str,
+    ) -> int:
+        """Generate color for each char.
+
+        - ❤️  for wrong letter (4)
+        - 💛  for correct letter, wrong position (1)
+        - 💚  for correct letter, correct location (0)
+        - 💙  for deviated letter, correct position (2)
+        - 💜  for deviated letter, wrong position (3)
+        """
+        if guesschar == wordchar:
+            return MatchResult.CORRECT_LETTER_CORRECT_POSITION
+        if guesschar in word:
+            return MatchResult.CORRECT_LETTER_WRONG_POSITION
+        guess_ascii: int = ord(guesschar)
+        word_ascii: int = ord(wordchar)
+        if abs(guess_ascii - word_ascii) < self.DEVIATED_THRESHOLD:
+            return MatchResult.DEVIATED_LETTER_CORRECT_POSITION
+        if any(
+            lambda ch: abs(guess_ascii - ord(ch)) < self.DEVIATED_THRESHOLD,
+            word,
+        ):
+            return MatchResult.DEVIATED_LETTER_WRONG_POSITION
+        return MatchResult.WRONG_LETTER
+
+    def gen_colors_for_guess(
+        self,
+        guess: str,
+        word: str,
+    ) -> Generator[int, Any, Any]:
+        """Generate the guess result in integers."""
+        if len(guess) != len(word):
+            raise UnequalInLengthError
+        for guesschar, wordchar in zip(guess, word, strict=False):
+            yield self._gen_color(guesschar, wordchar, word)
+
+    async def start(self, user_id: int, length: int | None = None) -> str:
+        """Start the game."""
+        word = self.gen_word(length=length)
+        await wordle_repo.create(word, user_id)
+        return word
+
+    async def guess(
+        self,
+        user_id: int,
+        guess: str,
+    ) -> Generator[int, Any, Any]:
+        """Return the guess result."""
+        wordle = await wordle_repo.get_by_user_id(user_id)
+        if wordle is None:
+            raise ValueError("wordle game not found for user %d" % user_id)
+        # TODO: save guess into db
+        return self.gen_colors_for_guess(guess, wordle.word)
 
 
-def guess_wordle(user_id: str, guess_word: str) -> Generator[int, Any, Any]:
-    """Check if the wordle is correct and store the guess in db."""
-    word = asyncio.run(wordle_repo.get_by_user_id(user_id)).word
-
-    colors = color_for_guess(guess_word, word)
-
-    # TODO : save guess into the db
-
-    return colors
-
-
-# quick test
-"""
 if __name__ == "__main__":
     import asyncio
 
     from app.models.base import Base
     from app.storage.database import database
 
-    async def main():
+    async def main() -> None:
+        """Main function."""
         async with database.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+        game = WordleGame()
+        await game.start(1234, 8)
+        await game.guess(1234, "laalaa")
 
     asyncio.run(main())
-
-    start_wordle("1234", 8)
-    print(list(guess_wordle("1234", "laalaa")))
-"""
