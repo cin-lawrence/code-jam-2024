@@ -62,4 +62,6 @@ ignore = [
     # Annotations.
     "ANN101",
     "ANN102",
+    # Assert.
+    "S101",
 ]

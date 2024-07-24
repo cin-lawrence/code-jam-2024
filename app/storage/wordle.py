@@ -34,7 +34,7 @@ class WordleRepo:
             wordle: Wordle | None = result.scalar()
             return wordle
 
-    async def get_by_user_id(self, user_id: str) -> Wordle | None:
+    async def get_by_user_id(self, user_id: int) -> Wordle | None:
         """Get wordle by user id."""
         async with self.db.create_session() as session:
             stmt = (
