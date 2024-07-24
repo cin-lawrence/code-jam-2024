@@ -82,10 +82,8 @@ class WordleGame:
 
     async def start(self, user_id: int, length: int | None = None) -> str:
         """Start the game."""
-        print("starting")
         word = self.gen_word(length=length)
         await wordle_repo.create(word, user_id)
-        print("done")
 
     async def guess(
         self,

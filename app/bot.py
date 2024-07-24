@@ -11,8 +11,6 @@ from .storage.wordle import wordle_repo
 
 logger = logging.getLogger(__name__)
 
-USERS = []
-
 
 class Bot(commands.Bot):
     """Overriden class for the default discord Bot."""
