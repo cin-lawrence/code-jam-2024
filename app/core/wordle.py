@@ -63,8 +63,7 @@ class WordleGame:
         if abs(guess_ascii - word_ascii) < self.DEVIATED_THRESHOLD:
             return MatchResult.DEVIATED_LETTER_CORRECT_POSITION
         if any(
-            lambda ch: abs(guess_ascii - ord(ch)) < self.DEVIATED_THRESHOLD,
-            word,
+            abs(guess_ascii - ord(ch)) < self.DEVIATED_THRESHOLD for ch in word
         ):
             return MatchResult.DEVIATED_LETTER_WRONG_POSITION
         return MatchResult.WRONG_LETTER
