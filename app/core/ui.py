@@ -1,7 +1,8 @@
 from typing import Final
 
 from discord import Embed, Member, SelectMenu, User
-from models.wordle import Guess, Wordle
+
+from app.models.guess import Guess
 
 EMOJI: Final[list[str]] = [
     ":green_heart:",
@@ -12,16 +13,17 @@ EMOJI: Final[list[str]] = [
 ]
 
 
-def form_embed(user: User | Member, wordle: Wordle) -> Embed:
+def form_embed(user: User | Member, guesses: list[Guess]) -> Embed:
     """Form the embed to show the user their guess' details."""
     embed = Embed(title=f"{user.name}'s Wordle Guess")
-
-    guesses: list[Guess] = wordle.guesses
 
     for idx, guess in enumerate(guesses):
         embed.add_field(
             name=f"Guess #{idx + 1}",
-            value=guess,
+            value=(
+                f"{_format_guess_word(guess.content)}\n{_format_guess_result(guess.result)}"
+            ),
+            inline=False,
         )
 
     return embed
@@ -33,9 +35,13 @@ def form_select_menu() -> SelectMenu:
 
 def _format_guess_word(word: str) -> str:
     """Format the guess word to show on the embed."""
-    return word
+    new_word = "  " + "     ".join(word)
+
+    return (
+        new_word.replace("L", " L ").replace("J", "  J ").replace("I", "  I ")
+    )
 
 
 def _format_guess_result(word: str) -> str:
     """Format the result into emoji to show on the embed."""
-    return word
+    return " ".join(EMOJI[int(val)] for val in word)

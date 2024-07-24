@@ -4,6 +4,7 @@ from collections.abc import Generator
 from enum import IntEnum
 from typing import Any, Final
 
+from app.storage.guess import guess_repo
 from app.storage.wordle import wordle_repo
 
 
@@ -38,7 +39,7 @@ class WordleGame:
         length = length or self._random_length()
         # TODO: remove the hardcoded word
         word: str = "foobar"
-        return word
+        return word.upper()
 
     def _gen_color(
         self,
@@ -81,21 +82,29 @@ class WordleGame:
 
     async def start(self, user_id: int, length: int | None = None) -> str:
         """Start the game."""
+        print("starting")
         word = self.gen_word(length=length)
         await wordle_repo.create(word, user_id)
-        return word
+        print("done")
 
     async def guess(
         self,
         user_id: int,
         guess: str,
-    ) -> Generator[int, Any, Any]:
-        """Return the guess result."""
-        wordle = await wordle_repo.get_by_user_id(user_id)
+    ) -> None:
+        """Save the guess result into the DB."""
+        wordle = await wordle_repo.get_active_wordle_by_user_id(
+            user_id=user_id,
+        )
         if wordle is None:
             raise ValueError("wordle game not found for user %d" % user_id)
-        # TODO: save guess into db
-        return self.gen_colors_for_guess(guess, wordle.word)
+
+        colors = self.gen_colors_for_guess(guess=guess, word=wordle.word)
+        await guess_repo.create(
+            content=guess,
+            result="".join(map(str, colors)),
+            wordle_id=wordle.id,
+        )
 
 
 if __name__ == "__main__":
@@ -111,5 +120,6 @@ if __name__ == "__main__":
         game = WordleGame()
         await game.start(1234, 8)
         await game.guess(1234, "laalaa")
+        await wordle_repo.get_guesses(1234)
 
     asyncio.run(main())

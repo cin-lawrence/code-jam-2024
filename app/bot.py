@@ -4,7 +4,10 @@ from discord import Client, Intents, Object
 from discord.ext import commands
 from discord.interactions import Interaction
 
+from .core import ui
+from .core.wordle import WordleGame
 from .settings import BotSettings, settings
+from .storage.wordle import wordle_repo
 
 logger = logging.getLogger(__name__)
 
@@ -48,13 +51,17 @@ async def hello_world(interaction: Interaction[Client]) -> None:
 )
 async def start_wordle(interaction: Interaction) -> None:
     """Start the wordle game."""
-    if interaction.user.id in USERS:
+    logger.log(
+        0,
+        await wordle_repo.get_active_wordle_by_user_id(interaction.user.id),
+    )
+    if await wordle_repo.get_active_wordle_by_user_id(interaction.user.id):
         await interaction.response.send_message(
             "You already starts the wordle game\n\
             Please complete the current game to start a new game",
         )
     else:
-        USERS.append(interaction.user.id)
+        await WordleGame().start(user_id=interaction.user.id)
         await interaction.response.send_message("Welcome to wordle")
 
 
@@ -65,8 +72,19 @@ async def start_wordle(interaction: Interaction) -> None:
 )
 async def guess(interaction: Interaction, word: str) -> None:
     """User guess the wordle."""
-    if interaction.user.id in USERS:
-        await interaction.response.send_message(f"Your guess is {word}")
+    if await wordle_repo.get_active_wordle_by_user_id(
+        user_id=interaction.user.id,
+    ):
+        await WordleGame().guess(
+            user_id=interaction.user.id,
+            guess=word.upper(),
+        )
+
+        embed = ui.form_embed(
+            user=interaction.user,
+            guesses=await wordle_repo.get_guesses(user_id=interaction.user.id),
+        )
+        await interaction.response.send_message(embed=embed)
     else:
         await interaction.response.send_message(
             "Please start the wordle game before making a guess",
@@ -80,8 +98,14 @@ async def guess(interaction: Interaction, word: str) -> None:
 )
 async def end_wordle(interaction: Interaction) -> None:
     """User end the current wordle game."""
-    if interaction.user.id in USERS:
+    if await wordle_repo.get_active_wordle_by_user_id(
+        user_id=interaction.user.id,
+    ):
         await interaction.response.send_message("The current game ends")
-        USERS.remove(interaction.user.id)
+
+        wordle = await wordle_repo.get_active_wordle_by_user_id(
+            user_id=interaction.user.id,
+        )
+        await wordle_repo.change_status(wordle.id)
     else:
-        await interaction.response.send_message("You are not in a game yet")
+        await interaction.response.send_message("You are not in a game yet.")
