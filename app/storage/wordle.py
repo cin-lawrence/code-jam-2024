@@ -2,6 +2,7 @@ from uuid import UUID
 
 from sqlalchemy import desc, select, update
 
+from app.models.guess import Guess
 from app.models.wordle import Wordle, WordleStatus
 
 from .database import Database, database
@@ -73,6 +74,19 @@ class WordleRepo:
                 .values(status=WordleStatus.COMPLETED.value)
             )
             await session.execute(stmt)
+            await session.commit()
+
+    async def get_guesses(self, user_id: int) -> list[Guess]:
+        """Get the guesses of the active wordle of a user."""
+        async with self.db.create_session() as session:
+            stmt = select(Wordle).where(
+                Wordle.user_id == user_id,
+                Wordle.status == WordleStatus.ACTIVE.value,
+            )
+            result = await session.execute(stmt)
+            wordle: Wordle | None = result.scalar()
+
+            return wordle.guesses
 
 
 # TODO: move this to a container
