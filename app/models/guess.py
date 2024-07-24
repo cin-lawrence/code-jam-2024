@@ -13,7 +13,11 @@ class Guess(Base):
 
     __tablename__ = "guess"
 
-    id: Mapped[UUID] = mapped_column(primary_key=True, index=True, default=uuid4)
+    id: Mapped[UUID] = mapped_column(
+        primary_key=True,
+        index=True,
+        default=uuid4,
+    )
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     content: Mapped[str]
     result: Mapped[str]

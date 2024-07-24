@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, select, update
 
-from app.models.wordle import Wordle
+from app.models.wordle import Wordle, WordleStatus
 
 from .database import Database, database
 
@@ -20,7 +20,11 @@ class WordleRepo:
     ) -> Wordle:
         """Create a wordle."""
         async with self.db.create_session() as session:
-            wordle = Wordle(word=word, user_id=user_id)
+            wordle = Wordle(
+                word=word,
+                user_id=user_id,
+                status=WordleStatus.ACTIVE.value,
+            )
             session.add(wordle)
             await session.commit()
             await session.refresh(wordle)
@@ -43,8 +47,32 @@ class WordleRepo:
                 .order_by(desc(Wordle.created_at))
             )
             result = await session.execute(stmt)
+            wordle: list[Wordle] | None = result.all()
+            return wordle
+
+    async def get_active_wordle_by_user_id(
+        self,
+        user_id: str,
+    ) -> Wordle | None:
+        """Get the active wordle by user id."""
+        async with self.db.create_session() as session:
+            stmt = select(Wordle).where(
+                Wordle.user_id == user_id,
+                Wordle.status == WordleStatus.ACTIVE.value,
+            )
+            result = await session.execute(stmt)
             wordle: Wordle | None = result.scalar()
             return wordle
+
+    async def change_status(self, id: UUID) -> None:
+        """Change the wordle status from ACTIVE to COMPLETED."""
+        async with self.db.create_session() as session:
+            stmt = (
+                update(Wordle)
+                .where(Wordle.id == id)
+                .values(status=WordleStatus.COMPLETED.value)
+            )
+            await session.execute(stmt)
 
 
 # TODO: move this to a container

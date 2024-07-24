@@ -50,7 +50,8 @@ async def start_wordle(interaction: Interaction) -> None:
     """Start the wordle game."""
     if interaction.user.id in USERS:
         await interaction.response.send_message(
-            "You already starts the wordle game\nPlease complete the current game to start a new game",
+            "You already starts the wordle game\n\
+            Please complete the current game to start a new game",
         )
     else:
         USERS.append(interaction.user.id)
@@ -67,7 +68,9 @@ async def guess(interaction: Interaction, word: str) -> None:
     if interaction.user.id in USERS:
         await interaction.response.send_message(f"Your guess is {word}")
     else:
-        await interaction.response.send_message("Please start the wordle game before making a guess")
+        await interaction.response.send_message(
+            "Please start the wordle game before making a guess",
+        )
 
 
 @bot.tree.command(

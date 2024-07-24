@@ -8,7 +8,8 @@ from sqlalchemy.orm import DeclarativeBase
 class classproperty:  # noqa: N801
     """Decorator that converts a method.
 
-    with a single cls argument into a property that can be accessed directly from the class.
+    with a single cls argument into a property
+    that can be accessed directly from the class.
     """
 
     def __init__(self, method: Callable[..., Any]) -> None:
@@ -38,4 +39,7 @@ class Base(DeclarativeBase):
 
     def as_dict(self) -> dict[str, Any]:
         """Return dictionary format."""
-        return {col.key: getattr(self, col.key) for col in inspect(self).mapper.column_attrs}
+        return {
+            col.key: getattr(self, col.key)
+            for col in inspect(self).mapper.column_attrs
+        }
