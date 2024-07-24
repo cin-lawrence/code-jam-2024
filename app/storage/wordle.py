@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import desc, select
 
 from app.models.wordle import Wordle
 
@@ -37,7 +37,11 @@ class WordleRepo:
     async def get_by_user_id(self, user_id: str) -> Wordle | None:
         """Get wordle by user id."""
         async with self.db.create_session() as session:
-            stmt = select(Wordle).where(Wordle.user_id == user_id)
+            stmt = (
+                select(Wordle)
+                .where(Wordle.user_id == user_id)
+                .order_by(desc(Wordle.created_at))
+            )
             result = await session.execute(stmt)
             wordle: Wordle | None = result.scalar()
             return wordle
