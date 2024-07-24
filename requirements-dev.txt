@@ -8,3 +8,4 @@ pre-commit~=3.7.1
 discord.py~=2.4.0
 
 nltk~=3.8.1
+ollama~=0.3.0
