@@ -1,11 +1,17 @@
+from collections.abc import Sequence
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import desc, select, update
+from sqlalchemy import Result, desc, select, update
 
 from app.models.guess import Guess
 from app.models.wordle import Wordle, WordleStatus
 
 from .database import Database, database
+
+
+class WordleNotFoundError(Exception):
+    """Wordle not found error."""
 
 
 class WordleRepo:
@@ -39,7 +45,7 @@ class WordleRepo:
             wordle: Wordle | None = result.scalar()
             return wordle
 
-    async def get_by_user_id(self, user_id: int) -> Wordle | None:
+    async def get_by_user_id(self, user_id: int) -> Sequence[Wordle]:
         """Get wordle by user id."""
         async with self.db.create_session() as session:
             stmt = (
@@ -47,9 +53,9 @@ class WordleRepo:
                 .where(Wordle.user_id == user_id)
                 .order_by(desc(Wordle.created_at))
             )
-            result = await session.execute(stmt)
-            wordle: list[Wordle] | None = result.all()
-            return wordle
+            result: Result[Any] = await session.execute(stmt)
+            wordles: Sequence[Wordle] = result.scalars().all()
+            return wordles
 
     async def get_active_wordle_by_user_id(
         self,
@@ -76,7 +82,7 @@ class WordleRepo:
             await session.execute(stmt)
             await session.commit()
 
-    async def get_guesses(self, user_id: int) -> list[Guess]:
+    async def get_guesses(self, user_id: int) -> Sequence[Guess]:
         """Get the guesses of the active wordle of a user."""
         async with self.db.create_session() as session:
             stmt = select(Wordle).where(
@@ -85,7 +91,8 @@ class WordleRepo:
             )
             result = await session.execute(stmt)
             wordle: Wordle | None = result.scalar()
-
+            if wordle is None:
+                raise WordleNotFoundError
             return wordle.guesses
 
 
