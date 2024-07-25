@@ -2,6 +2,7 @@ import asyncio
 import secrets
 from collections.abc import Generator
 from enum import IntEnum
+from pathlib import Path
 from typing import Any, Final
 
 from app.storage.guess import guess_repo
@@ -34,12 +35,17 @@ class WordleGame:
             self.WORD_LENGTH_MAX - self.WORD_LENGTH_MIN + 1,
         )
 
-    def gen_word(self, length: int | None = None) -> str:
+    def _gen_word(self, length: int | None = None) -> str:
         """Generate a new word."""
         length = length or self._random_length()
-        # TODO: remove the hardcoded word
-        word: str = "foobar"
-        return word.upper()
+        letters = [chr(val) for val in range(65, 65 + 25)]
+
+        with Path.open(
+            f"res/data/word/{length}/{secrets.choice(letters)}.txt",
+        ) as f:
+            word = secrets.choice(f.readlines())
+
+        return word.strip()
 
     def _gen_color(
         self,
@@ -76,13 +82,15 @@ class WordleGame:
     ) -> Generator[int, Any, Any]:
         """Generate the guess result in integers."""
         if len(guess) != len(word):
+            print(f"guess {len(guess)}")
+            print(f"word {len(word)}")
             raise UnequalInLengthError
         for guesschar, wordchar in zip(guess, word, strict=False):
             yield self._gen_color(guesschar, wordchar, word)
 
     async def start(self, user_id: int, length: int | None = None) -> str:
         """Start the game."""
-        word = self.gen_word(length=length)
+        word = self._gen_word(length=length)
         await wordle_repo.create(word, user_id)
 
     async def guess(
@@ -104,6 +112,31 @@ class WordleGame:
             wordle_id=wordle.id,
         )
 
+    async def end(self, user_id: int) -> None:
+        """End the current wordle game of a user."""
+        wordle = await wordle_repo.get_active_wordle_by_user_id(
+            user_id=user_id,
+        )
+        await wordle_repo.change_status(wordle.id)
+
+    async def check_guess(self, user_id: int) -> bool:
+        """Return True if the guess match the active wordle."""
+        guesses = await wordle_repo.get_guesses(user_id=user_id)
+        latest_guess = guesses[-1].result
+
+        return not any(map(int, latest_guess))
+
+    def check_valid_word(self, word: str) -> bool:
+        """Return True if the word is valid."""
+        length = len(word)
+
+        with Path.open(f"res/data/word/{length}/{word[0]}.txt") as f:
+            all_text = f.readlines()
+
+        all_text = [x.strip() for x in all_text]
+
+        return word in all_text
+
 
 if __name__ == "__main__":
     import asyncio
@@ -116,8 +149,6 @@ if __name__ == "__main__":
         async with database.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         game = WordleGame()
-        await game.start(1234, 8)
-        await game.guess(1234, "laalaa")
-        await wordle_repo.get_guesses(1234)
+        await game.start(1234, 5)
 
     asyncio.run(main())

@@ -59,7 +59,7 @@ async def start_wordle(interaction: Interaction) -> None:
             Please complete the current game to start a new game",
         )
     else:
-        await WordleGame().start(user_id=interaction.user.id)
+        await WordleGame().start(user_id=interaction.user.id, length=5)
         await interaction.response.send_message("Welcome to wordle")
 
 
@@ -70,10 +70,18 @@ async def start_wordle(interaction: Interaction) -> None:
 )
 async def guess(interaction: Interaction, word: str) -> None:
     """User guess the wordle."""
+    wordle = WordleGame()
+
+    if not wordle.check_valid_word(word=word.upper()):
+        await interaction.response.send_message(
+            f"{word.upper()} is not a valid word.",
+        )
+        return
+
     if await wordle_repo.get_active_wordle_by_user_id(
         user_id=interaction.user.id,
     ):
-        await WordleGame().guess(
+        await wordle.guess(
             user_id=interaction.user.id,
             guess=word.upper(),
         )
@@ -82,10 +90,22 @@ async def guess(interaction: Interaction, word: str) -> None:
             user=interaction.user,
             guesses=await wordle_repo.get_guesses(user_id=interaction.user.id),
         )
+
         await interaction.response.send_message(embed=embed)
+
     else:
         await interaction.response.send_message(
             "Please start the wordle game before making a guess",
+        )
+        return
+
+    results = await wordle_repo.get_guesses(interaction.user.id)
+    if await wordle.check_guess(interaction.user.id):
+        await wordle.end(interaction.user.id)
+
+        await interaction.channel.send(
+            content=f"Congratulations! {interaction.user.name} \
+                has guess the correct word in {len(results)} guess(es)",
         )
 
 
@@ -101,9 +121,7 @@ async def end_wordle(interaction: Interaction) -> None:
     ):
         await interaction.response.send_message("The current game ends")
 
-        wordle = await wordle_repo.get_active_wordle_by_user_id(
-            user_id=interaction.user.id,
-        )
-        await wordle_repo.change_status(wordle.id)
+        await WordleGame().end(interaction.user.id)
+
     else:
         await interaction.response.send_message("You are not in a game yet.")
