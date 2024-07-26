@@ -37,7 +37,7 @@ class WordGenerator:
         """Populate the wordnet data for each length."""
         for synset in wordnet.all_synsets():
             word = synset.name().split(".", 1)[0]
-            if not self.is_valid(word):
+            if not self.is_qualified(word):
                 continue
             self.synsets.append(synset)
             word_length = len(word)
@@ -59,13 +59,17 @@ class WordGenerator:
         lemma: Lemma = secrets.choice(synset.lemmas())
         return lemma.name(), synset
 
-    def is_valid(self, word: str) -> bool:
-        """Validate the word."""
+    def is_qualified(self, word: str) -> bool:
+        """Word qualification for adding into bank."""
         return (
             "-" not in word
             and "_" not in word
             and self.WORD_LENGTH_MIN <= len(word) <= self.WORD_LENGTH_MAX
         )
+
+    def is_valid(self, word: str) -> bool:
+        """Check if the word exists in the bank."""
+        return word in self.mp_len_words[len(word)]
 
     def random(self, length: int | None = None) -> Word:
         """Randomizes a word from the synset."""

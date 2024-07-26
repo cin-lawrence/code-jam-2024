@@ -2,15 +2,19 @@ import asyncio
 import secrets
 from collections.abc import Generator
 from enum import IntEnum
-from pathlib import Path
 from typing import Any, Final
 
 from app.storage.guess import guess_repo
 from app.storage.wordle import wordle_repo
+from app.word_generator import WordGenerator
 
 
 class UnequalInLengthError(Exception):
     """Guess and word are unequal in length."""
+
+
+class WordleGameNotFoundError(Exception):
+    """Exception raised when the wordle game not found."""
 
 
 class MatchResult(IntEnum):
@@ -30,6 +34,9 @@ class WordleGame:
     WORD_LENGTH_MAX: Final[int] = 15
     DEVIATED_THRESHOLD: Final[int] = 4
 
+    def __init__(self) -> None:
+        self.wordgen = WordGenerator()
+
     def _random_length(self) -> int:
         return self.WORD_LENGTH_MIN + secrets.randbelow(
             self.WORD_LENGTH_MAX - self.WORD_LENGTH_MIN + 1,
@@ -38,14 +45,7 @@ class WordleGame:
     def _gen_word(self, length: int | None = None) -> str:
         """Generate a new word."""
         length = length or self._random_length()
-        letters = [chr(val) for val in range(65, 65 + 25)]
-
-        with Path.open(
-            f"res/data/word/{length}/{secrets.choice(letters)}.txt",
-        ) as f:
-            word = secrets.choice(f.readlines())
-
-        return word.strip()
+        return self.wordgen.random(length=length).word
 
     def _gen_color(
         self,
@@ -92,6 +92,7 @@ class WordleGame:
         """Start the game."""
         word = self._gen_word(length=length)
         await wordle_repo.create(word, user_id)
+        return word
 
     async def guess(
         self,
@@ -117,6 +118,8 @@ class WordleGame:
         wordle = await wordle_repo.get_active_wordle_by_user_id(
             user_id=user_id,
         )
+        if not wordle:
+            raise WordleGameNotFoundError
         await wordle_repo.change_status(wordle.id)
 
     async def check_guess(self, user_id: int) -> bool:
@@ -128,14 +131,7 @@ class WordleGame:
 
     def check_valid_word(self, word: str) -> bool:
         """Return True if the word is valid."""
-        length = len(word)
-
-        with Path.open(f"res/data/word/{length}/{word[0]}.txt") as f:
-            all_text = f.readlines()
-
-        all_text = [x.strip() for x in all_text]
-
-        return word in all_text
+        return self.wordgen.is_valid(word)
 
 
 if __name__ == "__main__":
