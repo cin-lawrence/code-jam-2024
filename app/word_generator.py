@@ -96,7 +96,7 @@ class WordGenerator:
         )
         synset = secrets.choice(dataset)
         return Word(
-            word=synset.name(),
+            word=synset.name().split(".", 1)[0],
             definition=synset.definition(),
             synonyms={lm.name() for lm in synset.lemmas()},
             usages=synset.examples(),
