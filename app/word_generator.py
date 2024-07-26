@@ -24,10 +24,27 @@ class WordGenerator:
     WORDNET: Final[str] = "wordnet"
 
     WORD_LENGTH_MIN: Final[int] = 5
-    WORD_LENGTH_MAX: Final[int] = 10
+    WORD_LENGTH_MAX: Final[int] = 15
 
     def __init__(self) -> None:
-        self.synsets: list[Synset] = list(wordnet.all_synsets())
+        self.download_corpus()
+        self.synsets: list[Synset] = []
+        self.mp_len_words: dict[int, list[str]] = {}
+        self.mp_len_synsets: dict[int, list[Synset]] = {}
+        self.separate_lengths()
+
+    def separate_lengths(self) -> None:
+        """Populate the wordnet data for each length."""
+        for synset in wordnet.all_synsets():
+            word = synset.name().split(".", 1)[0]
+            if not self.is_valid(word):
+                continue
+            self.synsets.append(synset)
+            word_length = len(word)
+            self.mp_len_words.setdefault(word_length, [])
+            self.mp_len_words[word_length].append(word)
+            self.mp_len_synsets.setdefault(word_length, [])
+            self.mp_len_synsets[word_length].append(synset)
 
     @classmethod
     def download_corpus(cls) -> None:
@@ -50,14 +67,45 @@ class WordGenerator:
             and self.WORD_LENGTH_MIN <= len(word) <= self.WORD_LENGTH_MAX
         )
 
-    def random(self) -> Word:
+    def random(self, length: int | None = None) -> Word:
         """Randomizes a word from the synset."""
-        word, synset = self._random_word_in_synset()
-        while not self.is_valid(word):
-            word, synset = self._random_word_in_synset()
+        dataset: list[Synset] = (
+            self.synsets
+            if (
+                length is None
+                or length < self.WORD_LENGTH_MIN
+                or length > self.WORD_LENGTH_MAX
+            )
+            else self.mp_len_synsets[length]
+        )
+        synset = secrets.choice(dataset)
         return Word(
-            word=word,
+            word=synset.name(),
             definition=synset.definition(),
             synonyms={lm.name() for lm in synset.lemmas()},
             usages=synset.examples(),
         )
+
+    def __str__(self) -> str:
+        bank_stat = " | ".join(
+            [
+                f"Len {length}: {len(words)}"
+                for length, words in sorted(self.mp_len_words.items())
+            ]
+        )
+        return (
+            "<WordGenerator"
+            f" {bank_stat}"
+            f" | MinLength = {self.WORD_LENGTH_MIN}"
+            f" | MaxLength = {self.WORD_LENGTH_MAX}"
+            ">"
+        )
+
+
+if __name__ == "__main__":
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    wordgen = WordGenerator()
+    logger.info(wordgen)
