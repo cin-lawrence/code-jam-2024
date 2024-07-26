@@ -1,10 +1,11 @@
 import secrets
 from dataclasses import dataclass
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import nltk
-from nltk.corpus import wordnet
-from nltk.corpus.reader.wordnet import Lemma, Synset
+
+if TYPE_CHECKING:
+    from nltk.corpus.reader.wordnet import Lemma, Synset
 
 
 @dataclass
@@ -35,6 +36,8 @@ class WordGenerator:
 
     def separate_lengths(self) -> None:
         """Populate the wordnet data for each length."""
+        from nltk.corpus import wordnet
+
         for synset in wordnet.all_synsets():
             word = synset.name().split(".", 1)[0]
             if not self.is_qualified(word):
@@ -47,6 +50,13 @@ class WordGenerator:
             self.mp_len_synsets[word_length].append(synset)
 
     @classmethod
+    def boot(cls) -> None:
+        """Try accessing wordnet data to trigger data validation."""
+        from nltk.corpus import wordnet
+
+        list(wordnet.all_synsets())
+
+    @classmethod
     def download_corpus(cls) -> None:
         """Ensure the wordnet corpus is downloaded."""
         try:
@@ -54,7 +64,7 @@ class WordGenerator:
         except LookupError:
             nltk.download(cls.WORDNET)
 
-    def _random_word_in_synset(self) -> tuple[str, Synset]:
+    def _random_word_in_synset(self) -> tuple[str, "Synset"]:
         synset: Synset = secrets.choice(self.synsets)
         lemma: Lemma = secrets.choice(synset.lemmas())
         return lemma.name(), synset

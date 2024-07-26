@@ -19,6 +19,8 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO)
     # TODO: move this to bot start hook
     WordGenerator.download_corpus()
+    WordGenerator.boot()
+
     asyncio.run(init_db())
     bot.run(settings.DISCORD_TOKEN)
 
