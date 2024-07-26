@@ -1,14 +1,15 @@
 import logging
-import asyncio
+
 from discord import Client, Intents, Object
 from discord.ext import commands
 from discord.interactions import Interaction
 
 from .math_questions import generate_math_problem
-from .trivia_questions import get_trivia
 from .settings import BotSettings, settings
+from .trivia_questions import get_trivia
 
 logger = logging.getLogger(__name__)
+
 
 class Bot(commands.Bot):
     """Overridden class for the default discord Bot."""
@@ -26,7 +27,9 @@ class Bot(commands.Bot):
         await bot.tree.sync(guild=Object(id=settings.GUILD_ID))
         logger.warning("DONE syncing commands!")
 
+
 bot = Bot(settings)
+
 
 @bot.tree.command(
     name="alex",
@@ -37,22 +40,29 @@ async def hello_world(interaction: Interaction[Client]) -> None:
     """Says hello world."""
     await interaction.response.send_message("Hello World!")
 
+
 @bot.tree.command(
     name="math",
     description="CodeJam Hello World!",
     guild=Object(id=settings.GUILD_ID),
 )
 async def quest_ans(interaction: Interaction[Client]) -> None:
-    """math question"""
+    """Math question"""
     quest, ans = generate_math_problem()
     await interaction.response.send_message(quest)
 
     def check(m):
-        return m.author == interaction.user and m.channel == interaction.channel
+        return (
+            m.author == interaction.user and m.channel == interaction.channel
+        )
 
     try:
-        msg = await bot.wait_for('message', check=check, timeout=30.0)  # Wait for the user's response
-    except asyncio.TimeoutError:
+        msg = await bot.wait_for(
+            "message",
+            check=check,
+            timeout=30.0,
+        )  # Wait for the user's response
+    except TimeoutError:
         await interaction.followup.send("You took too long to respond!")
         return
 
@@ -62,7 +72,10 @@ async def quest_ans(interaction: Interaction[Client]) -> None:
     if user_answer == correct_answer:
         await interaction.followup.send("Correct! 🎉")
     else:
-        await interaction.followup.send(f"Incorrect. The correct answer was: {correct_answer}")
+        await interaction.followup.send(
+            f"Incorrect. The correct answer was: {correct_answer}",
+        )
+
 
 @bot.tree.command(
     name="trivia",
@@ -70,6 +83,6 @@ async def quest_ans(interaction: Interaction[Client]) -> None:
     guild=Object(id=settings.GUILD_ID),
 )
 async def trivia_q(interaction: Interaction[Client]) -> None:
-    """trivia."""
+    """Trivia."""
     quest = get_trivia()
     await interaction.response.send_message(quest)

@@ -1,15 +1,15 @@
 import numpy as np
 from scipy import stats
-from typing import Tuple
 
-def generate_math_problem() -> Tuple[str, str]:
+
+def generate_math_problem() -> tuple[str, str]:
     # Define the types and subtypes of math problems
     problem_types = ["Algebra", "Geometry", "Calculus", "Statistics"]
     subtypes = {
         "Algebra": ["Linear Equations", "Quadratic Equations", "Polynomials"],
         "Geometry": ["Area", "Volume", "Angles"],
         "Calculus": ["Derivatives", "Integrals"],
-        "Statistics": ["Mean", "Median", "Mode", "Standard Deviation"]
+        "Statistics": ["Mean", "Median", "Mode", "Standard Deviation"],
     }
 
     # Randomly select a problem type and subtype
@@ -81,8 +81,3 @@ def generate_math_problem() -> Tuple[str, str]:
     print(question)
     print(answer)
     return question, answer
-
-# Generate a random math problem
-# question, answer = generate_math_problem()
-# print("Question:", question)
-# print("Answer:", answer)
