@@ -45,7 +45,7 @@ class WordleGame:
     def _gen_word(self, length: int | None = None) -> str:
         """Generate a new word."""
         length = length or self._random_length()
-        return self.wordgen.random(length=length).word
+        return self.wordgen.random(length=length).word.upper()
 
     def _gen_color(
         self,
