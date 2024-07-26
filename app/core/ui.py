@@ -1,6 +1,7 @@
+from collections.abc import Sequence
 from typing import Final
 
-from discord import Embed, Member, SelectMenu, User
+from discord import Embed, Member, User
 
 from app.models.guess import Guess
 
@@ -13,7 +14,7 @@ EMOJI: Final[list[str]] = [
 ]
 
 
-def form_embed(user: User | Member, guesses: list[Guess]) -> Embed:
+def form_embed(user: User | Member, guesses: Sequence[Guess]) -> Embed:
     """Form the embed to show the user their guess' details."""
     embed = Embed(title=f"{user.name}'s Wordle Guess")
 
@@ -29,7 +30,7 @@ def form_embed(user: User | Member, guesses: list[Guess]) -> Embed:
     return embed
 
 
-def form_select_menu() -> SelectMenu:
+def form_select_menu() -> None:  # SelectMenu:
     """Form the SelectMenu for the user to choose length of word."""
 
 

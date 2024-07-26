@@ -59,7 +59,7 @@ class WordleRepo:
 
     async def get_active_wordle_by_user_id(
         self,
-        user_id: str,
+        user_id: int,
     ) -> Wordle | None:
         """Get the active wordle by user id."""
         async with self.db.create_session() as session:

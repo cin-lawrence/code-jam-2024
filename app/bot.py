@@ -1,8 +1,10 @@
 import logging
+from typing import cast
 
 from discord import Client, Intents, Object
 from discord.ext import commands
 from discord.interactions import Interaction
+from discord.interactions.channel import TextChannel
 
 from .core import ui
 from .core.wordle import WordleGame
@@ -103,7 +105,7 @@ async def guess(interaction: Interaction, word: str) -> None:
     if await wordle.check_guess(interaction.user.id):
         await wordle.end(interaction.user.id)
 
-        await interaction.channel.send(
+        await cast(TextChannel, interaction.channel).send(
             content=f"Congratulations! {interaction.user.name} \
                 has guess the correct word in {len(results)} guess(es)",
         )
