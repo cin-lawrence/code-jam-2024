@@ -2,9 +2,9 @@ import logging
 from typing import cast
 
 from discord import Client, Intents, Object
+from discord.channel import TextChannel
 from discord.ext import commands
 from discord.interactions import Interaction
-from discord.interactions.channel import TextChannel
 
 from .core import ui
 from .core.wordle import WordleGame
