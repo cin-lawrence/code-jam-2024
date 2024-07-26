@@ -69,6 +69,8 @@ class WordGenerator:
 
     def is_valid(self, word: str) -> bool:
         """Check if the word exists in the bank."""
+        if len(word) not in self.mp_len_words:
+            return False
         return word in self.mp_len_words[len(word)]
 
     def random(self, length: int | None = None) -> Word:
