@@ -131,7 +131,7 @@ class WordleGame:
 
     def check_valid_word(self, word: str) -> bool:
         """Return True if the word is valid."""
-        return self.wordgen.is_valid(word)
+        return self.wordgen.is_valid(word.lower())
 
 
 if __name__ == "__main__":

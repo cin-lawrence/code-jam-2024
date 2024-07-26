@@ -5,6 +5,7 @@ from .bot import bot
 from .models.base import Base
 from .settings import settings
 from .storage.database import database
+from .word_generator import WordGenerator
 
 
 async def init_db() -> None:
@@ -17,6 +18,7 @@ def main() -> None:
     """Run the app."""
     logging.basicConfig(level=logging.INFO)
     # TODO: move this to bot start hook
+    WordGenerator.download_corpus()
     asyncio.run(init_db())
     bot.run(settings.DISCORD_TOKEN)
 
