@@ -18,15 +18,18 @@ EMOJI: Final[list[str]] = [
 
 
 class Difficulty(StrEnum):
-    EASY = 'Easy'
-    MEDIUM = 'Medium'
-    HARD = 'Hard'
+    """Enum for game difficulties."""
+
+    EASY = "Easy"
+    MEDIUM = "Medium"
+    HARD = "Hard"
 
 
 class GuessEmbed(Embed):
     """Embed that show the guesses of the player."""
-    _2_SPACES: Final[str] = '  '
-    _4_SPACES: Final[str] = '    '
+
+    _2_SPACES: Final[str] = "  "
+    _4_SPACES: Final[str] = "    "
 
     def __init__(self, user: User | Member, guesses: Sequence[Guess]) -> None:
         super().__init__(title=f"{user.name}'s Wordle Guess")
@@ -42,7 +45,7 @@ class GuessEmbed(Embed):
 
     def _format_guess_word(self, word: str) -> str:
         """Format the guess word to show on the embed."""
-        new_word = f'{self._2_SPACES}{self._4_SPACES.join(word)}'
+        new_word = f"{self._2_SPACES}{self._4_SPACES.join(word)}"
 
         return (
             new_word.replace("L", " L ")
@@ -137,11 +140,13 @@ class DifficultySelect(Select[SelectionView]):
                 description=f"{val} Mode of Wordle",
                 # emoji
             )
-            for idx, val in enumerate([
-                Difficulty.EASY,
-                Difficulty.MEDIUM,
-                Difficulty.HARD,
-            ])
+            for idx, val in enumerate(
+                [
+                    Difficulty.EASY,
+                    Difficulty.MEDIUM,
+                    Difficulty.HARD,
+                ]
+            )
         ]
 
         super().__init__(

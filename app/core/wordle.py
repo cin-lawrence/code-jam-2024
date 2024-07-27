@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import secrets
 from collections.abc import Generator
@@ -12,7 +11,6 @@ from discord.ui import Select, View
 from app.storage.guess import guess_repo
 from app.storage.wordle import wordle_repo
 from app.word_generator import WordGenerator, get_wordgen
-
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +97,8 @@ class WordleGame:
         difficulty_select: Select[View] | None = None,
     ) -> str:
         """Start the game."""
+        # TODO: remove this line after implementing diffculty
+        logger.warning(difficulty_select)
         word = self._gen_word(length=int(length_select.values[0]))  # noqa:PD011
         message = "You word is chosen. You can start guessing the word now"
 
@@ -147,18 +147,3 @@ class WordleGame:
     def check_valid_word(self, word: str) -> bool:
         """Return True if the word is valid."""
         return self.wordgen.is_valid(word.lower())
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    from app.models.base import Base
-    from app.storage.database import database
-
-    async def main() -> None:
-        """Main function."""
-        async with database.engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        game = WordleGame()
-
-    asyncio.run(main())

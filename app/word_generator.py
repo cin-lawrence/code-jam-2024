@@ -121,6 +121,7 @@ class WordGenerator:
 
 @lru_cache
 def get_wordgen() -> WordGenerator:
+    """Ensure only 1 instance of wordgen is used."""
     return WordGenerator()
 
 
