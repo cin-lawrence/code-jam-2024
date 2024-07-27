@@ -4,6 +4,9 @@ from collections.abc import Generator
 from enum import IntEnum
 from typing import Any, Final
 
+from discord.interactions import Interaction
+from discord.ui import Select
+
 from app.storage.guess import guess_repo
 from app.storage.wordle import wordle_repo
 from app.word_generator import WordGenerator
@@ -88,11 +91,17 @@ class WordleGame:
         for guesschar, wordchar in zip(guess, word, strict=False):
             yield self._gen_color(guesschar, wordchar, word)
 
-    async def start(self, user_id: int, length: int | None = None) -> str:
+    async def start(
+        self,
+        interaction: Interaction,
+        length_select: Select,
+    ) -> str:
         """Start the game."""
-        word = self._gen_word(length=length)
-        await wordle_repo.create(word, user_id)
-        return word
+        word = self._gen_word(length=int(length_select.values[0]))  # noqa:PD011
+        message = "You word is chosen. You can start guessing the word now"
+
+        await wordle_repo.create(word, interaction.user.id)
+        await interaction.response.send_message(content=message)
 
     async def guess(
         self,

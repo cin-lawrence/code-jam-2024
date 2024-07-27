@@ -1,13 +1,12 @@
 import logging
 from typing import cast
 
-from discord import Client, Intents, Object
-from discord.channel import TextChannel
+from discord import Client, Intents, Object, TextChannel
 from discord.ext import commands
 from discord.interactions import Interaction
 
 from .core import ui
-from .core.wordle import WordleGame
+from .core.wordle import UnequalInLengthError, WordleGame
 from .settings import BotSettings, settings
 from .storage.wordle import wordle_repo
 
@@ -51,18 +50,17 @@ async def hello_world(interaction: Interaction[Client]) -> None:
 )
 async def start_wordle(interaction: Interaction) -> None:
     """Start the wordle game."""
-    logger.log(
-        0,
-        await wordle_repo.get_active_wordle_by_user_id(interaction.user.id),
-    )
     if await wordle_repo.get_active_wordle_by_user_id(interaction.user.id):
         await interaction.response.send_message(
             "You already starts the wordle game\n\
             Please complete the current game to start a new game",
         )
     else:
-        await WordleGame().start(user_id=interaction.user.id, length=5)
-        await interaction.response.send_message("Welcome to wordle")
+        await interaction.response.defer()
+
+        view_menu = ui.SelectionView()
+
+        await interaction.followup.send("Welcome to wordle", view=view_menu)
 
 
 @bot.tree.command(
@@ -83,17 +81,23 @@ async def guess(interaction: Interaction, word: str) -> None:
     if await wordle_repo.get_active_wordle_by_user_id(
         user_id=interaction.user.id,
     ):
-        await wordle.guess(
-            user_id=interaction.user.id,
-            guess=word.upper(),
-        )
+        try:
+            await wordle.guess(
+                user_id=interaction.user.id,
+                guess=word.upper(),
+            )
+        except UnequalInLengthError:
+            message = "The length of guess and the word are not the same"
+            await interaction.response.send_message(content=message)
+        else:
+            embed = ui.GuessEmbed(
+                user=interaction.user,
+                guesses=await wordle_repo.get_guesses(
+                    user_id=interaction.user.id
+                ),
+            )
 
-        embed = ui.form_embed(
-            user=interaction.user,
-            guesses=await wordle_repo.get_guesses(user_id=interaction.user.id),
-        )
-
-        await interaction.response.send_message(embed=embed)
+            await interaction.response.send_message(embed=embed)
 
     else:
         await interaction.response.send_message(
