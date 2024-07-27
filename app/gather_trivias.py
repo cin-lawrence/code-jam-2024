@@ -92,8 +92,8 @@ async def main() -> None:
                             ),
                         )
                     )
-        except Exception:
-            logger.exception()
+        except Exception as exc:
+            logger.exception(exc)
             continue
         finally:
             await asyncio.sleep(2)

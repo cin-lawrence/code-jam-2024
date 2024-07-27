@@ -67,7 +67,7 @@ class WordGenerator:
             word_length = len(word)
 
             temp_words.setdefault(word_length, {})
-            if not temp_words.get(word_length).get(word):
+            if not temp_words.get(word_length, {}).get(word):
                 self.synsets.append(synset)
                 temp_words[word_length][word] = 1
                 temp_synsets.setdefault(word_length, [])
@@ -130,7 +130,7 @@ class WordGenerator:
 
     def random(self, length: int, difficulty: Difficulty) -> Word | None:
         """Randomizes a word from the synset."""
-        dataset: list[Synset] | None = self.mp_len_synsets.get(length).get(
+        dataset: list[Synset] | None = self.mp_len_synsets.get(length, {}).get(
             difficulty
         )
 

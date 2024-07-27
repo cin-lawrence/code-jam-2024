@@ -65,4 +65,5 @@ ignore = [
     # Assert.
     "S101",
     "COM812",
+    "TRY401",
 ]
