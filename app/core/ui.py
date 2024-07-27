@@ -76,7 +76,7 @@ class SelectionView(View):
 class LengthSelect(Select[SelectionView]):
     """Select that choose the length of a word in a Wordle Game."""
 
-    OPTION_PLACEHOLDER: Final[str] = ""
+    OPTION_PLACEHOLDER: Final[str] = "Choose Length of Word"
     MIN_VALUES: Final[int] = 1
     MAX_VALUES: Final[int] = 1
 
@@ -120,7 +120,7 @@ class LengthSelect(Select[SelectionView]):
 class DifficultySelect(Select[SelectionView]):
     """Select that choose the length of a word in a Wordle Game."""
 
-    OPTION_PLACEHOLDER: Final[str] = ""
+    OPTION_PLACEHOLDER: Final[str] = "Choose Wordle Game Difficulty"
     MIN_VALUES: Final[int] = 1
     MAX_VALUES: Final[int] = 1
 
