@@ -1,15 +1,20 @@
 import asyncio
+import logging
 import secrets
 from collections.abc import Generator
 from enum import IntEnum
 from typing import Any, Final
 
+from discord import Client
 from discord.interactions import Interaction
-from discord.ui import Select
+from discord.ui import Select, View
 
 from app.storage.guess import guess_repo
 from app.storage.wordle import wordle_repo
-from app.word_generator import WordGenerator
+from app.word_generator import WordGenerator, get_wordgen
+
+
+logger = logging.getLogger(__name__)
 
 
 class UnequalInLengthError(Exception):
@@ -38,7 +43,7 @@ class WordleGame:
     DEVIATED_THRESHOLD: Final[int] = 4
 
     def __init__(self) -> None:
-        self.wordgen = WordGenerator()
+        self.wordgen: WordGenerator = get_wordgen()
 
     def _random_length(self) -> int:
         return self.WORD_LENGTH_MIN + secrets.randbelow(
@@ -84,17 +89,14 @@ class WordleGame:
         word: str,
     ) -> Generator[int, Any, Any]:
         """Generate the guess result in integers."""
-        if len(guess) != len(word):
-            print(f"guess {len(guess)}")
-            print(f"word {len(word)}")
-            raise UnequalInLengthError
         for guesschar, wordchar in zip(guess, word, strict=False):
             yield self._gen_color(guesschar, wordchar, word)
 
     async def start(
         self,
-        interaction: Interaction,
-        length_select: Select,
+        interaction: Interaction[Client],
+        length_select: Select[View],
+        difficulty_select: Select[View] | None = None,
     ) -> str:
         """Start the game."""
         word = self._gen_word(length=int(length_select.values[0]))  # noqa:PD011
@@ -102,6 +104,7 @@ class WordleGame:
 
         await wordle_repo.create(word, interaction.user.id)
         await interaction.response.send_message(content=message)
+        return word
 
     async def guess(
         self,
@@ -114,6 +117,9 @@ class WordleGame:
         )
         if wordle is None:
             raise ValueError("wordle game not found for user %d" % user_id)
+
+        if len(guess) != len(wordle.word):
+            raise UnequalInLengthError
 
         colors = self.gen_colors_for_guess(guess=guess, word=wordle.word)
         await guess_repo.create(
@@ -154,6 +160,5 @@ if __name__ == "__main__":
         async with database.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         game = WordleGame()
-        await game.start(1234, 5)
 
     asyncio.run(main())

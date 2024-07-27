@@ -1,5 +1,6 @@
 import secrets
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import TYPE_CHECKING, Final
 
 import nltk
@@ -116,6 +117,11 @@ class WordGenerator:
             f" | MaxLength = {self.WORD_LENGTH_MAX}"
             ">"
         )
+
+
+@lru_cache
+def get_wordgen() -> WordGenerator:
+    return WordGenerator()
 
 
 if __name__ == "__main__":

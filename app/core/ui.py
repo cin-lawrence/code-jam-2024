@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Final
 
-from discord import Embed, Interaction, Member, SelectOption, User
+from discord import Client, Embed, Interaction, Member, SelectOption, User
 from discord.ui import Select, View
 
 from app.core.wordle import WordleGame
@@ -60,7 +60,7 @@ class SelectionView(View):
         self.add_item(self.length_select)
         self.add_item(self.difficulty_select)
 
-    async def start(self, interaction: Interaction) -> None:
+    async def start(self, interaction: Interaction[Client]) -> None:
         """Start the Wordle Game."""
         await WordleGame().start(
             interaction=interaction,
@@ -69,12 +69,12 @@ class SelectionView(View):
         )
 
 
-class LengthSelect(Select):
+class LengthSelect(Select[SelectionView]):
     """Select that choose the length of a word in a Wordle Game."""
 
     OPTION_PLACEHOLDER: Final[str] = ""
-    MIN_VALUES = 1
-    MAX_VALUES = 1
+    MIN_VALUES: Final[int] = 1
+    MAX_VALUES: Final[int] = 1
 
     def __init__(self) -> None:
         options = [
@@ -100,8 +100,11 @@ class LengthSelect(Select):
             description="Choose a random letter word for the Wordle Game",
         )
 
-    async def callback(self, interaction: Interaction) -> None:
+    async def callback(self, interaction: Interaction[Client]) -> None:
         """User made a selection."""
+        if self.view is None:
+            return
+
         self.view.length_selected = True
 
         if self.view.length_selected and self.view.difficulty_selected:
@@ -110,12 +113,12 @@ class LengthSelect(Select):
             await interaction.response.defer()
 
 
-class DifficultySelect(Select):
+class DifficultySelect(Select[SelectionView]):
     """Select that choose the length of a word in a Wordle Game."""
 
     OPTION_PLACEHOLDER: Final[str] = ""
-    MIN_VALUES = 1
-    MAX_VALUES = 1
+    MIN_VALUES: Final[int] = 1
+    MAX_VALUES: Final[int] = 1
 
     def __init__(self) -> None:
         options = [
@@ -135,8 +138,11 @@ class DifficultySelect(Select):
             options=options,
         )
 
-    async def callback(self, interaction: Interaction) -> None:
+    async def callback(self, interaction: Interaction[Client]) -> None:
         """User made a selection."""
+        if self.view is None:
+            return
+
         self.view.difficulty_selected = True
 
         if self.view.length_selected and self.view.difficulty_selected:
