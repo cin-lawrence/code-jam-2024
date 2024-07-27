@@ -44,3 +44,4 @@ class Database:
 
 # TODO: move this to a container
 database = Database("sqlite+aiosqlite:///./test.db")
+trivia_database = Database("sqlite+aiosqlite:///./trivia.db")
