@@ -10,7 +10,7 @@ from discord.ui import Select, View
 
 from app.storage.guess import guess_repo
 from app.storage.wordle import wordle_repo
-from app.word_generator import WordGenerator, get_wordgen
+from app.word_generator import Difficulty, WordGenerator, get_wordgen
 
 logger = logging.getLogger(__name__)
 
@@ -48,10 +48,14 @@ class WordleGame:
             self.WORD_LENGTH_MAX - self.WORD_LENGTH_MIN + 1,
         )
 
-    def _gen_word(self, length: int | None = None) -> str:
+    def _gen_word(
+        self, length: int | None = None, difficulty: Difficulty = ...
+    ) -> str:
         """Generate a new word."""
         length = length or self._random_length()
-        return self.wordgen.random(length=length).word.upper()
+        return self.wordgen.random(
+            length=length, difficulty=difficulty
+        ).word.upper()
 
     def _gen_color(
         self,
@@ -97,9 +101,10 @@ class WordleGame:
         difficulty_select: Select[View] | None = None,
     ) -> str:
         """Start the game."""
-        # TODO: remove this line after implementing diffculty
-        logger.warning(difficulty_select)
-        word = self._gen_word(length=int(length_select.values[0]))  # noqa:PD011
+        word = self._gen_word(
+            length=int(length_select.values[0]),  # noqa:PD011
+            difficulty=difficulty_select.values[0],  # noqa:PD011
+        )
         message = "You word is chosen. You can start guessing the word now"
 
         await wordle_repo.create(word, interaction.user.id)

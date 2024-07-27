@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from enum import StrEnum
 from typing import Final
 
 from discord import Client, Embed, Interaction, Member, SelectOption, User
@@ -7,6 +6,7 @@ from discord.ui import Select, View
 
 from app.core.wordle import WordleGame
 from app.models.guess import Guess
+from app.word_generator import Difficulty
 
 EMOJI: Final[list[str]] = [
     ":green_heart:",
@@ -15,14 +15,6 @@ EMOJI: Final[list[str]] = [
     ":purple_heart:",
     ":heart:",
 ]
-
-
-class Difficulty(StrEnum):
-    """Enum for game difficulties."""
-
-    EASY = "Easy"
-    MEDIUM = "Medium"
-    HARD = "Hard"
 
 
 class GuessEmbed(Embed):
@@ -136,17 +128,11 @@ class DifficultySelect(Select[SelectionView]):
         options = [
             SelectOption(
                 label=val,
-                value=str(idx),
+                value=val,
                 description=f"{val} Mode of Wordle",
                 # emoji
             )
-            for idx, val in enumerate(
-                [
-                    Difficulty.EASY,
-                    Difficulty.MEDIUM,
-                    Difficulty.HARD,
-                ]
-            )
+            for val in Difficulty
         ]
 
         super().__init__(
