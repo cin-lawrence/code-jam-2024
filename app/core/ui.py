@@ -42,7 +42,7 @@ class GuessEmbed(Embed):
 
     def _format_guess_word(self, word: str) -> str:
         """Format the guess word to show on the embed."""
-        new_word = f'{_2_SPACES}{_4_SPACES.join(word)}'
+        new_word = f'{self._2_SPACES}{self._4_SPACES.join(word)}'
 
         return (
             new_word.replace("L", " L ")
