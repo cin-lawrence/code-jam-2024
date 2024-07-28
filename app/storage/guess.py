@@ -1,6 +1,9 @@
+from collections.abc import Sequence
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import Result, select
+from sqlalchemy.sql.functions import count
 
 from app.models.guess import Guess
 
@@ -34,6 +37,26 @@ class GuessRepo:
             result = await session.execute(stmt)
             guess: Guess | None = result.scalar()
             return guess
+
+    async def get_by_wordle_id(self, wordle_id: UUID) -> Sequence[Guess]:
+        """Get all guesses by wordle ID."""
+        async with self.db.create_session() as session:
+            stmt = select(Guess).where(Guess.wordle_id == wordle_id)
+            result: Result[Any] = await session.execute(stmt)
+            guesses: Sequence[Guess] = result.scalars().all()
+            return guesses
+
+    async def count_by_wordle_ids(self, wordle_ids: Sequence[UUID]) -> int:
+        """Count number of guesses by all wordle IDs."""
+        async with self.db.create_session() as session:
+            stmt = (
+                select(count())
+                .select_from(Guess)
+                .where(Guess.wordle_id.in_(wordle_ids))
+            )
+            result: Result[Any] = await session.execute(stmt)
+            cnt: int = result.scalar()
+            return cnt
 
 
 # TODO: move this to a container

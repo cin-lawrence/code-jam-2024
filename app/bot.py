@@ -10,6 +10,7 @@ from .core import ui
 from .core.wordle import UnequalInLengthError, WordleGame
 from .models.wordle import Wordle, WordleStatus
 from .settings import BotSettings, settings
+from .storage.guess import guess_repo
 from .storage.player import player_repo
 from .storage.trivia import trivia_repo
 from .storage.wordle import wordle_repo
@@ -184,3 +185,27 @@ async def trivial(interaction: Interaction[Client], wordle_id: UUID) -> None:
         await interaction.response.send_message(
             content=trivia_ques.question, view=view
         )
+
+
+@bot.tree.command(
+    name="player-stats",
+    description="Show the player stats",
+    guild=Object(id=settings.GUILD_ID),
+)
+async def show_player_stats(interaction: Interaction[Client]) -> None:
+    """Show the player stats."""
+    wordles = await wordle_repo.get_by_user_id(interaction.user.id)
+    num_guesses = await guess_repo.count_by_wordle_ids(
+        [wordle.id for wordle in wordles]
+    )
+    player = await player_repo.get(interaction.user.id)
+    player_id = player.id if player else interaction.user.id
+    player_name = player.display_name if player else "unknown"
+    await interaction.response.send_message(
+        embed=ui.PlayerStatEmbed(
+            player_id,
+            player_name,
+            len(wordles),
+            num_guesses,
+        )
+    )

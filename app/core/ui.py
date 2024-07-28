@@ -53,6 +53,49 @@ class GuessEmbed(Embed):
         return " ".join(EMOJI[int(val)] for val in word)
 
 
+class PlayerStatEmbed(Embed):
+    """Embed that show the player stats."""
+
+    def __init__(
+        self,
+        player_id: int,
+        player_name: str,
+        num_wordle_games: int,
+        num_guesses: int,
+    ) -> None:
+        super().__init__(title=f"{player_name}'s stats")
+
+        self.add_field(
+            name="Player ID",
+            value=player_id,
+            inline=False,
+        )
+
+        self.add_field(
+            name="Player name",
+            value=player_name,
+            inline=False,
+        )
+
+        self.add_field(
+            name="Wordle Games",
+            value=num_wordle_games,
+            inline=False,
+        )
+
+        self.add_field(
+            name="Guesses",
+            value=num_guesses,
+            inline=False,
+        )
+
+        self.add_field(
+            name="Average guesses per game",
+            value=num_guesses // num_wordle_games,
+            inline=False,
+        )
+
+
 class StartSelectionView(View):
     """View that contains all the Select when game start."""
 
