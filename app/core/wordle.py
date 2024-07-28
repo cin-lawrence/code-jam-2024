@@ -94,7 +94,6 @@ class WordleGame:
             length=int(length_select.values[0]),  # noqa:PD011
             difficulty=Difficulty(difficulty_select.values[0]),  # noqa:PD011
         )
-        print(word)
         message = "You word is chosen."
         message += (
             f"The word has {len(word)} letters."
