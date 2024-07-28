@@ -128,14 +128,13 @@ class WordGenerator:
             + self.mp_len_words[len(word)][Difficulty.HARD]
         )
 
-    def random(self, length: int, difficulty: Difficulty) -> Word | None:
+    def random(self, length: int, difficulty: Difficulty) -> Word:
         """Randomizes a word from the synset."""
-        dataset: list[Synset] | None = self.mp_len_synsets.get(length, {}).get(
-            difficulty
+        dataset: list[Synset] = self.mp_len_synsets.get(length, {}).get(
+            difficulty, []
         )
 
-        if dataset is None:
-            return None
+        assert len(dataset) > 0, "the word bank is empty"
 
         synset = secrets.choice(dataset)
         return Word(

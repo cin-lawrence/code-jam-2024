@@ -1,13 +1,17 @@
+import logging
 from collections.abc import Sequence
 from typing import Any, Final
 from uuid import UUID
 
 from sqlalchemy import Result, desc, select, update
 
+from app.enums import MatchResult
 from app.models.guess import Guess
 from app.models.wordle import Wordle, WordleStatus
 
 from .database import Database, database
+
+logger = logging.getLogger(__name__)
 
 
 class WordleNotFoundError(Exception):
@@ -83,36 +87,64 @@ class WordleRepo:
             wordle: Wordle | None = result.scalar()
             return wordle
 
+    async def get_ongoing_wordle(self, user_id: int) -> Wordle | None:
+        """Get unfinished wordle game by user id."""
+        async with self.db.create_session() as session:
+            stmt = select(Wordle).where(
+                Wordle.user_id == user_id,
+                Wordle.status != WordleStatus.COMPLETED,
+            )
+            result = await session.execute(stmt)
+            wordle: Wordle | None = result.scalar()
+            return wordle
+
+    async def _calculate_next_status(self, id: UUID) -> WordleStatus | None:
+        wordle = await wordle_repo.get(id=id)
+        if wordle is None:
+            return None
+        match wordle.status:
+            case WordleStatus.ACTIVE:
+                guesses = await wordle_repo.get_guesses(wordle.user_id)
+                if len(guesses) < self.TRIVIA_THRESHOLD:
+                    return None
+                recent_results = [
+                    guess.result for guess in guesses[-self.TRIVIA_THRESHOLD :]
+                ]
+                if str(MatchResult.CORRECT_LETTER_CORRECT_POSITION) in "".join(
+                    recent_results
+                ):
+                    return WordleStatus.PENDING
+                return None
+            case WordleStatus.PENDING:
+                return WordleStatus.ACTIVE
+            case WordleStatus.COMPLETED:
+                return None
+            case _:
+                raise ValueError
+
     async def change_status(
         self, id: UUID, *, is_winning: bool = False
     ) -> None:
         """Change the wordle status based on the current guess."""
-        if is_winning:
-            status = WordleStatus.COMPLETED.value
-        else:
-            wordle = await wordle_repo.get(id=id)
-
-            if wordle.status == WordleStatus.PENDING.value:
-                status = WordleStatus.ACTIVE.value
-            else:
-                guesses = await wordle_repo.get_guesses(user_id=wordle.user_id)
-                if len(guesses) < self.TRIVIA_THRESHOLD:
-                    return
-                if "0" not in [
-                    x
-                    for guess in guesses[-self.TRIVIA_THRESHOLD :]
-                    for x in guess.result
-                ]:
-                    status = WordleStatus.PENDING.value
-                else:
-                    return
-
+        next_status = (
+            WordleStatus.COMPLETED
+            if is_winning
+            else await self._calculate_next_status(id)
+        )
+        if not next_status:
+            return
+        logger.info("next status = %s", next_status)
         async with self.db.create_session() as session:
-            stmt = update(Wordle).where(Wordle.id == id).values(status=status)
+            stmt = (
+                update(Wordle)
+                .where(Wordle.id == id)
+                .values(status=next_status)
+            )
             await session.execute(stmt)
             await session.commit()
 
-        print(f"next status:{status}")
+    async def win_game(self, id: UUID) -> None:
+        """Change the status when the play wins."""
 
     async def get_guesses(self, user_id: int) -> Sequence[Guess]:
         """Get the guesses of the active wordle of a user."""

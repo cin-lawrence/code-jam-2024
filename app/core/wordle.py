@@ -1,7 +1,6 @@
 import logging
 import secrets
 from collections.abc import Generator
-from enum import IntEnum
 from typing import Any, Final
 from uuid import UUID
 
@@ -9,6 +8,7 @@ from discord import Client
 from discord.interactions import Interaction
 from discord.ui import Select, View
 
+from app.enums import MatchResult
 from app.storage.guess import guess_repo
 from app.storage.wordle import wordle_repo
 from app.word_generator import Difficulty, WordGenerator, get_wordgen
@@ -22,16 +22,6 @@ class UnequalInLengthError(Exception):
 
 class WordleGameNotFoundError(Exception):
     """Exception raised when the wordle game not found."""
-
-
-class MatchResult(IntEnum):
-    """Meaningful guess result."""
-
-    CORRECT_LETTER_CORRECT_POSITION = 0
-    CORRECT_LETTER_WRONG_POSITION = 1
-    DEVIATED_LETTER_CORRECT_POSITION = 2
-    DEVIATED_LETTER_WRONG_POSITION = 3
-    WRONG_LETTER = 4
 
 
 class WordleGame:
@@ -97,7 +87,7 @@ class WordleGame:
         self,
         interaction: Interaction[Client],
         length_select: Select[View],
-        difficulty_select: Select[View] | None = None,
+        difficulty_select: Select[View],
     ) -> str:
         """Start the game."""
         word = self._gen_word(

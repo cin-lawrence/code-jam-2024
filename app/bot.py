@@ -135,6 +135,7 @@ async def guess(interaction: Interaction[Client], word: str) -> None:
             wordle_game = await wordle_repo.get_pending_wordle(
                 user_id=interaction.user.id
             )
+            assert wordle_game, "no pending wordle game"
             await trivial(interaction=interaction, wordle_id=wordle_game.id)
 
 
@@ -156,7 +157,7 @@ async def end_wordle(interaction: Interaction[Client]) -> None:
         await interaction.response.send_message("You are not in a game yet.")
 
 
-async def trivial(interaction: Interaction, wordle_id: UUID) -> None:
+async def trivial(interaction: Interaction[Client], wordle_id: UUID) -> None:
     """Show the trivial question."""
     trivia_ques = await trivia_repo.get_random()
 

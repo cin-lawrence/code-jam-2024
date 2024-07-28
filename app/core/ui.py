@@ -197,7 +197,7 @@ class TrivialSelectionView(View):
             options=options,
         )
 
-        self.select.callback = self.check_answer
+        self.select.callback = self.check_answer  # type: ignore[method-assign]
 
         self.add_item(self.select)
 
