@@ -104,6 +104,7 @@ class WordleRepo:
             return None
         match wordle.status:
             case WordleStatus.ACTIVE.value:
+                print("1")
                 guesses = await wordle_repo.get_guesses(wordle.user_id)
                 if len(guesses) < self.TRIVIA_THRESHOLD:
                     return None
@@ -116,8 +117,10 @@ class WordleRepo:
                     return WordleStatus.PENDING.value
                 return None
             case WordleStatus.PENDING.value:
+                print("2")
                 return WordleStatus.ACTIVE.value
             case WordleStatus.COMPLETED.value:
+                print("3")
                 return None
             case _:
                 raise ValueError
@@ -131,7 +134,7 @@ class WordleRepo:
             if is_winning
             else await self._calculate_next_status(id)
         )
-        if not next_status:
+        if next_status is not None:
             return
         logger.info("next status = %s", next_status)
         async with self.db.create_session() as session:
