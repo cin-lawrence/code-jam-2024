@@ -119,20 +119,16 @@ async def guess(interaction: Interaction[Client], word: str) -> None:
         case _:
             return
 
-    results = await wordle_repo.get_guesses(interaction.user.id)
     if not (await wordle.check_guess(interaction.user.id)):
         await wordle.wrong_guess(id=wordle.id)
         wordle = await wordle_repo.get_pending_wordle(interaction.user.id)
 
         if wordle:
-            wordle_game = await wordle_repo.get_pending_wordle(
-                user_id=interaction.user.id
-            )
-            assert wordle_game, "no pending wordle game"
-            await trivial(interaction=interaction, wordle_id=wordle_game.id)
+            await trivial(interaction=interaction, wordle_id=wordle.id)
             return
 
     await wordle.end(interaction.user.id)
+    results = await wordle_repo.get_guesses(interaction.user.id)
     await cast(TextChannel, interaction.channel).send(
         content=f"Congratulations! {interaction.user.name} \
             has guess the correct word in {len(results)} guess(es)",
