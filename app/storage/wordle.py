@@ -92,7 +92,12 @@ class WordleRepo:
         async with self.db.create_session() as session:
             stmt = select(Wordle).where(
                 Wordle.user_id == user_id,
-                Wordle.status != WordleStatus.COMPLETED.value,
+                Wordle.status.in_(
+                    [
+                        WordleStatus.ACTIVE.value,
+                        WordleStatus.PENDING.value,
+                    ]
+                ),
             )
             result = await session.execute(stmt)
             wordle: Wordle | None = result.scalar()
