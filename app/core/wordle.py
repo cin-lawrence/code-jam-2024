@@ -47,13 +47,12 @@ class WordleGame:
         length = length or self._random_length()
         return self.wordgen.random(length=length).word.upper()
 
-    def _gen_color(
+    def gen_colors_for_guess(  # noqa: C901, PLR0912
         self,
-        guesschar: str,
-        wordchar: str,
+        guess: str,
         word: str,
-    ) -> int:
-        """Generate color for each char.
+    ) -> Generator[int, Any, Any]:
+        """Generate the guess result in integers.
 
         - ❤️  for wrong letter (4)
         - 💛  for correct letter, wrong position (1)
@@ -61,32 +60,59 @@ class WordleGame:
         - 💙  for deviated letter, correct position (2)
         - 💜  for deviated letter, wrong position (3)
         """
-        if guesschar == wordchar:
-            return MatchResult.CORRECT_LETTER_CORRECT_POSITION
-        if guesschar in word:
-            return MatchResult.CORRECT_LETTER_WRONG_POSITION
-        guess_ascii: int = ord(guesschar)
-        word_ascii: int = ord(wordchar)
-        if abs(guess_ascii - word_ascii) < self.DEVIATED_THRESHOLD:
-            return MatchResult.DEVIATED_LETTER_CORRECT_POSITION
-        if any(
-            abs(guess_ascii - ord(ch)) < self.DEVIATED_THRESHOLD for ch in word
-        ):
-            return MatchResult.DEVIATED_LETTER_WRONG_POSITION
-        return MatchResult.WRONG_LETTER
-
-    def gen_colors_for_guess(
-        self,
-        guess: str,
-        word: str,
-    ) -> Generator[int, Any, Any]:
-        """Generate the guess result in integers."""
-        if len(guess) != len(word):
-            print(f"guess {len(guess)}")
-            print(f"word {len(word)}")
+        length = len(guess)
+        if length != len(word):
             raise UnequalInLengthError
-        for guesschar, wordchar in zip(guess, word, strict=False):
-            yield self._gen_color(guesschar, wordchar, word)
+
+        word_used = [False] * length
+        guess_used = [False] * length
+        colors = [False] * length
+
+        # Correct Letter, Correct Position
+        for i in range(length):
+            if guess[i] == word[i]:
+                word_used[i] = True
+                guess_used[i] = True
+                colors[i] = MatchResult.CORRECT_LETTER_CORRECT_POSITION
+
+        # Correct Letter, Wrong Position
+        for i in range(length):
+            if guess_used[i]:
+                continue
+            for j in range(length):
+                if not word_used[j] and guess[i] == word[j]:
+                    word_used[j] = True
+                    guess_used[i] = True
+                    colors[i] = MatchResult.CORRECT_LETTER_WRONG_POSITION
+                    break
+
+        # Deviated Letter, Correct Position
+        for i in range(length):
+            if guess_used[i] or word_used[i]:
+                continue
+            if abs(ord(guess[i]) - ord(word[i])) <= self.DEVIATED_THRESHOLD:
+                word_used[i] = True
+                guess_used[i] = True
+                colors[i] = MatchResult.DEVIATED_LETTER_CORRECT_POSITION
+
+        # Deviated Letter, Wrong Position
+        for i in range(length):
+            if guess_used[i]:
+                continue
+            for j in range(length):
+                if (
+                    not word_used[j]
+                    and abs(ord(guess[i]) - ord(word[j]))
+                    <= self.DEVIATED_THRESHOLD
+                ):
+                    word_used[j] = True
+                    guess_used[i] = True
+                    colors[i] = MatchResult.DEVIATED_LETTER_WRONG_POSITION
+                    break
+            else:
+                colors[i] = MatchResult.WRONG_LETTER
+
+        yield from colors
 
     async def start(self, user_id: int, length: int | None = None) -> str:
         """Start the game."""
