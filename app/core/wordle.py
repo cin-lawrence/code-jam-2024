@@ -32,7 +32,7 @@ class WordleGame:
 
     WORD_LENGTH_MIN: Final[int] = 5
     WORD_LENGTH_MAX: Final[int] = 15
-    DEVIATED_THRESHOLD: Final[int] = 4
+    DEVIATED_THRESHOLD: int = 4
 
     def __init__(self) -> None:
         self.wordgen = WordGenerator()
@@ -66,7 +66,7 @@ class WordleGame:
 
         word_used = [False] * length
         guess_used = [False] * length
-        colors = [False] * length
+        colors = [MatchResult.WRONG_LETTER] * length
 
         # Correct Letter, Correct Position
         for i in range(length):

@@ -49,7 +49,7 @@ async def hello_world(interaction: Interaction[Client]) -> None:
     description="Start the wordle game",
     guild=Object(id=settings.GUILD_ID),
 )
-async def start_wordle(interaction: Interaction) -> None:
+async def start_wordle(interaction: Interaction[Client]) -> None:
     """Start the wordle game."""
     logger.log(
         0,
@@ -70,7 +70,7 @@ async def start_wordle(interaction: Interaction) -> None:
     description="make a guess on the wordle",
     guild=Object(id=settings.GUILD_ID),
 )
-async def guess(interaction: Interaction, word: str) -> None:
+async def guess(interaction: Interaction[Client], word: str) -> None:
     """User guess the wordle."""
     wordle = WordleGame()
 
@@ -116,7 +116,7 @@ async def guess(interaction: Interaction, word: str) -> None:
     description="end the current wordle game",
     guild=Object(id=settings.GUILD_ID),
 )
-async def end_wordle(interaction: Interaction) -> None:
+async def end_wordle(interaction: Interaction[Client]) -> None:
     """User end the current wordle game."""
     if await wordle_repo.get_active_wordle_by_user_id(
         user_id=interaction.user.id,
