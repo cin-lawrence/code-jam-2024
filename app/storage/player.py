@@ -1,3 +1,5 @@
+from sqlalchemy import select
+
 from app.models.player import Player
 
 from .database import Database, database
@@ -25,6 +27,14 @@ class PlayerRepo:
             session.add(player)
             await session.commit()
             await session.refresh(player)
+            return player
+
+    async def get(self, id: int) -> Player | None:
+        """Get guess by id."""
+        async with self.db.create_session() as session:
+            stmt = select(Player).where(Player.id == id)
+            result = await session.execute(stmt)
+            player: Player | None = result.scalar()
             return player
 
 

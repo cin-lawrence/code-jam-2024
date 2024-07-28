@@ -10,6 +10,7 @@ from .core import ui
 from .core.wordle import UnequalInLengthError, WordleGame
 from .models.wordle import Wordle, WordleStatus
 from .settings import BotSettings, settings
+from .storage.player import player_repo
 from .storage.trivia import trivia_repo
 from .storage.wordle import wordle_repo
 
@@ -58,12 +59,20 @@ async def start_wordle(interaction: Interaction[Client]) -> None:
             "You already starts the wordle game\n\
             Please complete the current game to start a new game",
         )
-    else:
-        await interaction.response.defer()
+        return
 
-        view_menu = ui.StartSelectionView()
+    player = await player_repo.get(interaction.user.id)
+    if player is None:
+        await player_repo.create(
+            userid=interaction.user.id,
+            username=interaction.user.name,
+            display_name=interaction.user.display_name,
+        )
+    await interaction.response.defer()
 
-        await interaction.followup.send("Welcome to wordle", view=view_menu)
+    view_menu = ui.StartSelectionView()
+
+    await interaction.followup.send("Welcome to wordle", view=view_menu)
 
 
 @bot.tree.command(
