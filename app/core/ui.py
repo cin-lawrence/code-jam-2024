@@ -268,7 +268,7 @@ class TrivialSelectionView(View):
 
     async def check_answer(self, interaction: Interaction[Client]) -> None:
         """Check if the selection is same as the answer."""
-        if self.select.values[0] == self.CORRECT_VALUE:  # noqa: PD011
+        if self.select.values[0] != self.CORRECT_VALUE:  # noqa: PD011
             await interaction.response.send_message("Wrong Answer")
             await wordle_repo.change_status(
                 id=self.wordle_id, is_winning=False
