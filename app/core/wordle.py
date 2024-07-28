@@ -131,14 +131,29 @@ class WordleGame:
 
     async def end(self, user_id: int) -> None:
         """End the current wordle game of a user."""
-        wordle = await wordle_repo.get_active_wordle_by_user_id(
+        wordle = await wordle_repo.get_ongoing_wordle(
             user_id=user_id,
         )
         if not wordle:
-            wordle = await wordle_repo.get_pending_wordle(user_id=user_id)
-            if not wordle:
-                raise WordleGameNotFoundError
-        await wordle_repo.change_status(id=wordle.id, is_winning=True)
+            raise WordleGameNotFoundError
+        await wordle_repo.change_status(
+            id=wordle.id,
+            is_winning=False,
+            is_ending=True,
+        )
+
+    async def win(self, user_id: int) -> None:
+        """Win the current wordle game of a user."""
+        wordle = await wordle_repo.get_ongoing_wordle(
+            user_id=user_id,
+        )
+        if not wordle:
+            raise WordleGameNotFoundError
+        await wordle_repo.change_status(
+            id=wordle.id,
+            is_winning=True,
+            is_ending=False,
+        )
 
     async def check_guess(self, user_id: int) -> bool:
         """Return True if the guess match the active wordle."""

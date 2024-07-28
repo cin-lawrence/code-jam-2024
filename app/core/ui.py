@@ -70,6 +70,7 @@ class PlayerStatEmbed(Embed):
         player_id: int,
         player_name: str,
         num_wordle_games: int,
+        num_wins: int,
         num_guesses: int,
     ) -> None:
         super().__init__(title=f"{player_name}'s stats")
@@ -89,6 +90,12 @@ class PlayerStatEmbed(Embed):
         self.add_field(
             name="Wordle Games",
             value=num_wordle_games,
+            inline=False,
+        )
+
+        self.add_field(
+            name="Wins",
+            value=num_wins,
             inline=False,
         )
 

@@ -126,14 +126,19 @@ class WordleRepo:
                 raise ValueError
 
     async def change_status(
-        self, id: UUID, *, is_winning: bool = False
+        self,
+        id: UUID,
+        *,
+        is_winning: bool = False,
+        is_ending: bool = False,
     ) -> None:
         """Change the wordle status based on the current guess."""
-        next_status = (
-            WordleStatus.COMPLETED.value
-            if is_winning
-            else await self._calculate_next_status(id)
-        )
+        if is_winning and not is_ending:
+            next_status = WordleStatus.COMPLETED.value
+        elif is_ending and not is_winning:
+            next_status = WordleStatus.ABORTED.value
+        else:
+            next_status = await self._calculate_next_status(id)
         if next_status is None:
             return
         logger.info("next status = %s", next_status)

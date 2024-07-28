@@ -132,7 +132,7 @@ async def guess(interaction: Interaction[Client], word: str) -> None:
             content=f"Congratulations! {interaction.user.name}"
             f"has guess the correct word in {len(results)} guess(es)"
         )
-        await wordle_game.end(interaction.user.id)
+        await wordle_game.win(interaction.user.id)
 
 
 @bot.tree.command(
@@ -185,6 +185,11 @@ async def trivial(interaction: Interaction[Client], wordle_id: UUID) -> None:
 async def show_player_stats(interaction: Interaction[Client]) -> None:
     """Show the player stats."""
     wordles = await wordle_repo.get_by_user_id(interaction.user.id)
+    wins = [
+        wordle
+        for wordle in wordles
+        if wordle.status == WordleStatus.COMPLETED.value
+    ]
     num_guesses = await guess_repo.count_by_wordle_ids(
         [wordle.id for wordle in wordles]
     )
@@ -196,6 +201,7 @@ async def show_player_stats(interaction: Interaction[Client]) -> None:
             player_id,
             player_name,
             len(wordles),
+            len(wins),
             num_guesses,
         )
     )

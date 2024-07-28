@@ -18,6 +18,7 @@ class WordleStatus(Enum):
     ACTIVE = 0
     COMPLETED = 1
     PENDING = 2
+    ABORTED = 3
 
 
 class Wordle(Base):
