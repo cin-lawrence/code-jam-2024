@@ -17,6 +17,7 @@ class WordleStatus(Enum):
 
     ACTIVE = 0
     COMPLETED = 1
+    PENDING = 2
 
 
 class Wordle(Base):

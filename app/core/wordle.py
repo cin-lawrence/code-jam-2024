@@ -3,6 +3,7 @@ import secrets
 from collections.abc import Generator
 from enum import IntEnum
 from typing import Any, Final
+from uuid import UUID
 
 from discord import Client
 from discord.interactions import Interaction
@@ -48,9 +49,7 @@ class WordleGame:
             self.WORD_LENGTH_MAX - self.WORD_LENGTH_MIN + 1,
         )
 
-    def _gen_word(
-        self, length: int | None = None, difficulty: Difficulty = ...
-    ) -> str:
+    def _gen_word(self, length: int | None, difficulty: Difficulty) -> str:
         """Generate a new word."""
         length = length or self._random_length()
         return self.wordgen.random(
@@ -103,7 +102,7 @@ class WordleGame:
         """Start the game."""
         word = self._gen_word(
             length=int(length_select.values[0]),  # noqa:PD011
-            difficulty=difficulty_select.values[0],  # noqa:PD011
+            difficulty=Difficulty(difficulty_select.values[0]),  # noqa:PD011
         )
         message = "You word is chosen. You can start guessing the word now"
 
@@ -139,8 +138,10 @@ class WordleGame:
             user_id=user_id,
         )
         if not wordle:
-            raise WordleGameNotFoundError
-        await wordle_repo.change_status(wordle.id)
+            wordle = await wordle_repo.get_pending_wordle(user_id=user_id)
+            if not wordle:
+                raise WordleGameNotFoundError
+        await wordle_repo.change_status(id=wordle.id, is_winning=True)
 
     async def check_guess(self, user_id: int) -> bool:
         """Return True if the guess match the active wordle."""
@@ -152,3 +153,7 @@ class WordleGame:
     def check_valid_word(self, word: str) -> bool:
         """Return True if the word is valid."""
         return self.wordgen.is_valid(word.lower())
+
+    async def wrong_guess(self, id: UUID) -> None:
+        """The previous guess is wrong."""
+        await wordle_repo.change_status(id=id, is_winning=False)

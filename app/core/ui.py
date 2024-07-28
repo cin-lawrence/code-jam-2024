@@ -1,11 +1,14 @@
 from collections.abc import Sequence
+from random import shuffle
 from typing import Final
+from uuid import UUID
 
 from discord import Client, Embed, Interaction, Member, SelectOption, User
 from discord.ui import Select, View
 
 from app.core.wordle import WordleGame
 from app.models.guess import Guess
+from app.storage.wordle import wordle_repo
 from app.word_generator import Difficulty
 
 EMOJI: Final[list[str]] = [
@@ -50,8 +53,8 @@ class GuessEmbed(Embed):
         return " ".join(EMOJI[int(val)] for val in word)
 
 
-class SelectionView(View):
-    """View that contains all the Select."""
+class StartSelectionView(View):
+    """View that contains all the Select when game start."""
 
     def __init__(self, *, timeout: float | None = 180) -> None:
         self.length_selected = False
@@ -73,7 +76,7 @@ class SelectionView(View):
         )
 
 
-class LengthSelect(Select[SelectionView]):
+class LengthSelect(Select[StartSelectionView]):
     """Select that choose the length of a word in a Wordle Game."""
 
     OPTION_PLACEHOLDER: Final[str] = "Choose Length of Word"
@@ -117,7 +120,7 @@ class LengthSelect(Select[SelectionView]):
             await interaction.response.defer()
 
 
-class DifficultySelect(Select[SelectionView]):
+class DifficultySelect(Select[StartSelectionView]):
     """Select that choose the length of a word in a Wordle Game."""
 
     OPTION_PLACEHOLDER: Final[str] = "Choose Wordle Game Difficulty"
@@ -153,3 +156,56 @@ class DifficultySelect(Select[SelectionView]):
             await self.view.start(interaction)
         else:
             await interaction.response.defer()
+
+
+class TrivialSelectionView(View):
+    """View that contains all the Select in a trivial question."""
+
+    OPTION_PLACEHOLDER: Final[str] = "Select the correct answer"
+    MIN_VALUES: Final[int] = 1
+    MAX_VALUES: Final[int] = 1
+
+    CORRECT_VALUE: Final[str] = "0"
+
+    def __init__(
+        self,
+        correct_answer: str,
+        wrong_answers: list[str],
+        wordle_id: UUID,
+        *,
+        timeout: float | None = 180,
+    ) -> None:
+        self.wordle_id = wordle_id
+        super().__init__(timeout=timeout)
+
+        options = [
+            SelectOption(
+                label=ans,
+                value=str(idx),
+            )
+            for idx, ans in enumerate(wrong_answers, 1)
+        ]
+
+        options.append(SelectOption(label=correct_answer, value="0"))
+
+        shuffle(options)
+
+        self.select: Select[TrivialSelectionView] = Select(
+            placeholder=self.OPTION_PLACEHOLDER,
+            min_values=self.MIN_VALUES,
+            max_values=self.MAX_VALUES,
+            options=options,
+        )
+
+        self.select.callback = self.check_answer
+
+        self.add_item(self.select)
+
+    async def check_answer(self, interaction: Interaction[Client]) -> None:
+        """Check if the selection is same as the answer."""
+        if self.select.values[0] == self.CORRECT_VALUE:  # noqa: PD011
+            await interaction.response.send_message("Correct")
+        else:
+            await interaction.response.send_message("Wrong")
+
+        await wordle_repo.change_status(id=self.wordle_id, is_winning=False)

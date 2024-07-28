@@ -1,5 +1,6 @@
 import logging
 from typing import cast
+from uuid import UUID
 
 from discord import Client, Intents, Object, TextChannel
 from discord.ext import commands
@@ -8,6 +9,7 @@ from discord.interactions import Interaction
 from .core import ui
 from .core.wordle import UnequalInLengthError, WordleGame
 from .settings import BotSettings, settings
+from .storage.trivia import trivia_repo
 from .storage.wordle import wordle_repo
 
 logger = logging.getLogger(__name__)
@@ -58,7 +60,7 @@ async def start_wordle(interaction: Interaction[Client]) -> None:
     else:
         await interaction.response.defer()
 
-        view_menu = ui.SelectionView()
+        view_menu = ui.StartSelectionView()
 
         await interaction.followup.send("Welcome to wordle", view=view_menu)
 
@@ -78,9 +80,10 @@ async def guess(interaction: Interaction[Client], word: str) -> None:
         )
         return
 
-    if await wordle_repo.get_active_wordle_by_user_id(
-        user_id=interaction.user.id,
-    ):
+    active_wordle = await wordle_repo.get_active_wordle_by_user_id(
+        user_id=interaction.user.id
+    )
+    if active_wordle:
         try:
             await wordle.guess(
                 user_id=interaction.user.id,
@@ -100,9 +103,18 @@ async def guess(interaction: Interaction[Client], word: str) -> None:
             await interaction.response.send_message(embed=embed)
 
     else:
-        await interaction.response.send_message(
-            "Please start the wordle game before making a guess",
+        pending_wordle = await wordle_repo.get_pending_wordle(
+            user_id=interaction.user.id
         )
+        if pending_wordle:
+            message = (
+                "Please complete the trivia question first "
+                "before continue guessing"
+            )
+        else:
+            message = "Please start the wordle game before making a guess."
+
+        await interaction.response.send_message(message)
         return
 
     results = await wordle_repo.get_guesses(interaction.user.id)
@@ -113,6 +125,17 @@ async def guess(interaction: Interaction[Client], word: str) -> None:
             content=f"Congratulations! {interaction.user.name} \
                 has guess the correct word in {len(results)} guess(es)",
         )
+    else:
+        await wordle.wrong_guess(id=active_wordle.id)
+        pending_wordle = await wordle_repo.get_pending_wordle(
+            user_id=interaction.user.id
+        )
+
+        if pending_wordle:
+            wordle_game = await wordle_repo.get_pending_wordle(
+                user_id=interaction.user.id
+            )
+            await trivial(interaction=interaction, wordle_id=wordle_game.id)
 
 
 @bot.tree.command(
@@ -124,10 +147,34 @@ async def end_wordle(interaction: Interaction[Client]) -> None:
     """User end the current wordle game."""
     if await wordle_repo.get_active_wordle_by_user_id(
         user_id=interaction.user.id,
-    ):
+    ) or await wordle_repo.get_pending_wordle(user_id=interaction.user.id):
         await interaction.response.send_message("The current game ends")
 
         await WordleGame().end(interaction.user.id)
 
     else:
         await interaction.response.send_message("You are not in a game yet.")
+
+
+async def trivial(interaction: Interaction, wordle_id: UUID) -> None:
+    """Show the trivial question."""
+    trivia_ques = await trivia_repo.get_random()
+
+    view = ui.TrivialSelectionView(
+        correct_answer=trivia_ques.correct_answer,
+        wrong_answers=[
+            trivia_ques.incorrect_answer_1,
+            trivia_ques.incorrect_answer_2,
+            trivia_ques.incorrect_answer_3,
+        ],
+        wordle_id=wordle_id,
+    )
+
+    if interaction.response.is_done():
+        await interaction.followup.send(
+            content=trivia_ques.question, view=view
+        )
+    else:
+        await interaction.response.send_message(
+            content=trivia_ques.question, view=view
+        )
