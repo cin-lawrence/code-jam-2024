@@ -127,12 +127,12 @@ async def guess(interaction: Interaction[Client], word: str) -> None:
             await trivial(interaction=interaction, wordle_id=wordle.id)
             return
     else:
-        await wordle_game.end(interaction.user.id)
         results = await wordle_repo.get_guesses(interaction.user.id)
         await cast(TextChannel, interaction.channel).send(
             content=f"Congratulations! {interaction.user.name}"
             f"has guess the correct word in {len(results)} guess(es)"
         )
+        await wordle_game.end(interaction.user.id)
 
 
 @bot.tree.command(

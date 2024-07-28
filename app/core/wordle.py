@@ -94,6 +94,7 @@ class WordleGame:
             length=int(length_select.values[0]),  # noqa:PD011
             difficulty=Difficulty(difficulty_select.values[0]),  # noqa:PD011
         )
+        print(word)
         message = "You word is chosen. You can start guessing the word now"
 
         await wordle_repo.create(word, interaction.user.id)
@@ -164,9 +165,7 @@ class WordleGame:
 
     async def get_letter_hint(self, user_id: int) -> str:
         """Return the correct letter at specific position."""
-        wordle_game = await wordle_repo.get_active_wordle_by_user_id(
-            user_id=user_id
-        )
+        wordle_game = await wordle_repo.get_ongoing_wordle(user_id=user_id)
         position = secrets.randbelow(len(wordle_game.word))
 
         return (
