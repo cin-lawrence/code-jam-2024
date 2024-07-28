@@ -275,13 +275,13 @@ class TrivialSelectionView(View):
 
         await wordle_repo.change_status(id=self.wordle_id, is_winning=False)
 
-        wordle = WordleGame()
-        word = await wordle_repo.get_active_wordle_by_user_id(
+        wordle_game = WordleGame()
+        wordle = await wordle_repo.get_active_wordle_by_user_id(
             user_id=interaction.user.id
         )
         await interaction.followup.send("Incoming hint ...")
 
-        hint = await wordle.get_hint(
-            user_id=interaction.user.id, word=word.word
+        hint = await wordle_game.get_hint(
+            user_id=interaction.user.id, word=wordle.word
         )
         await interaction.followup.send(hint)
