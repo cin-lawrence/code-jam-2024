@@ -31,104 +31,40 @@ class TestWordleGame(unittest.TestCase):
             assert word.isalpha(), f"{word} is an invalid word."
             assert word.isupper(), f"{word} is not in upper case."
 
-    def test__gen_color_threshold_zero(self) -> None:
-        """Test the _gen_color() method of WordleGame.
+    def test_gen_colors_for_guess_threshold_zero(self) -> None:
+        """Test the gen_colors_for_guess method of WordleGame.
 
         At threshold=0, no character should be marked deviated.
         """
         self.game.DEVIATED_THRESHOLD = 0
         test_cases = (
-            ("Z", RED),
-            ("X", RED),
-            ("V", RED),
-            ("W", GRN),
-            ("R", YLW),
-            ("A", RED),
+            ("A", "B", [RED]),
+            ("A", "Z", [RED]),
+            ("W", "W", [GRN]),
         )
-        for guesschar, expected in test_cases:
-            color = self.game._gen_color(
-                guesschar=guesschar, wordchar="W", word="WORRY"
+        for word, guess, expected in test_cases:
+            colors = list(
+                self.game.gen_colors_for_guess(guess=guess, word=word)
             )
-            assert expected == color, f"expected {expected} found {color}."
+            assert expected == colors, f"expected {expected} found {colors}."
 
-    def test__gen_color_threshold_one(self) -> None:
-        """Test the _gen_color() method of WordleGame.
+    def test_gen_colors_for_guess_threshold_one(self) -> None:
+        """Test the gen_colors_for_guess method of WordleGame.
 
         At threshold=1, adjacent characters should be marked deviated if not
         already marked.
         """
         self.game.DEVIATED_THRESHOLD = 1
         test_cases = (
-            ("Z", PRL),
-            ("X", BLU),
-            ("V", BLU),
-            ("W", GRN),
-            ("R", YLW),
-            ("A", RED),
+            ("A", "B", [BLU]),
+            ("A", "Z", [RED]),
+            ("W", "W", [GRN]),
         )
-        for guesschar, expected in test_cases:
-            color = self.game._gen_color(
-                guesschar=guesschar, wordchar="W", word="WORRY"
+        for word, guess, expected in test_cases:
+            colors = list(
+                self.game.gen_colors_for_guess(guess=guess, word=word)
             )
-            assert expected == color, f"expected {expected} found {color}."
-
-    def test__gen_color_threshold_default(self) -> None:
-        """Test the _gen_color() method of WordleGame.
-
-        Checks that all characters from A to Z are marked appropriately.
-        """
-        wordchar = "M"
-
-        start = max(ord("A"), ord(wordchar) - self.game.DEVIATED_THRESHOLD)
-        end = min(ord("Z"), ord(wordchar) + self.game.DEVIATED_THRESHOLD) + 1
-
-        for i in range(ord("A"), start):
-            ch = chr(i)
-            assert (
-                self.game._gen_color(
-                    guesschar=ch, wordchar=wordchar, word=wordchar
-                )
-                == RED
-            )
-
-        for i in range(start, end):
-            ch = chr(i)
-            if ch == wordchar:
-                assert (
-                    self.game._gen_color(
-                        guesschar=ch, wordchar=wordchar, word=wordchar
-                    )
-                    == GRN
-                )
-            else:
-                assert (
-                    self.game._gen_color(
-                        guesschar=ch, wordchar=wordchar, word=wordchar
-                    )
-                    == BLU
-                )
-
-        for i in range(start, end):
-            ch = chr(i)
-            if ch == wordchar:
-                assert (
-                    self.game._gen_color(guesschar=ch, wordchar="Z", word="ZM")
-                    == YLW
-                )
-            else:
-                assert (
-                    self.game._gen_color(guesschar=ch, wordchar="Z", word="ZM")
-                    == PRL
-                )
-
-        for i in range(end, ord("Z") + 1):
-            ch = chr(i)
-            assert (
-                self.game._gen_color(
-                    guesschar=ch, wordchar=wordchar, word=wordchar
-                )
-                == RED
-            )
+            assert expected == colors, f"expected {expected} found {colors}."
 
     def test_word_length(self) -> None:
         """Incorrect word length must raise UnequalInLengthError."""
@@ -145,7 +81,7 @@ class TestWordleGame(unittest.TestCase):
         ----
             In test case 1 (word: SPORT, guess: APPLE),
             since only one P is correct,
-            second P should not be marked as "correct letter",
+            second P should not be marked as "correct letter, wrong position",
             but rather as "deviated, correct position" and
             L would not be "deviated, wrong position" w.r.t. to O
             since second P was already marked as "deviated, correct position".
