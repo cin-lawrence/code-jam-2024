@@ -83,9 +83,9 @@ async def start_wordle(interaction: Interaction[Client]) -> None:
 )
 async def guess(interaction: Interaction[Client], word: str) -> None:
     """User guess the wordle."""
-    wordle = WordleGame()
+    wordle_game = WordleGame()
 
-    if not wordle.check_valid_word(word=word.upper()):
+    if not wordle_game.check_valid_word(word=word.upper()):
         await interaction.response.send_message(
             f"{word.upper()} is not a valid word.",
         )
@@ -100,9 +100,9 @@ async def guess(interaction: Interaction[Client], word: str) -> None:
         return
 
     match wordle.status:
-        case WordleStatus.ACTIVE:
+        case WordleStatus.ACTIVE.value:
             try:
-                await wordle.guess(
+                await wordle_game.guess(
                     user_id=interaction.user.id,
                     guess=word.upper(),
                 )
@@ -119,7 +119,7 @@ async def guess(interaction: Interaction[Client], word: str) -> None:
                 )
 
                 await interaction.response.send_message(embed=embed)
-        case WordleStatus.PENDING:
+        case WordleStatus.PENDING.value:
             message = (
                 "Please complete the trivia question first "
                 "before continue guessing"
@@ -129,20 +129,20 @@ async def guess(interaction: Interaction[Client], word: str) -> None:
         case _:
             return
 
-    if not (await wordle.check_guess(interaction.user.id)):
-        await wordle.wrong_guess(id=wordle.id)
+    if not (await wordle_game.check_guess(interaction.user.id)):
+        await wordle_game.wrong_guess(id=wordle.id)
         wordle = await wordle_repo.get_pending_wordle(interaction.user.id)
 
         if wordle:
             await trivial(interaction=interaction, wordle_id=wordle.id)
             return
-
-    await wordle.end(interaction.user.id)
-    results = await wordle_repo.get_guesses(interaction.user.id)
-    await cast(TextChannel, interaction.channel).send(
-        content=f"Congratulations! {interaction.user.name} \
-            has guess the correct word in {len(results)} guess(es)",
-    )
+    else:
+        await wordle_game.end(interaction.user.id)
+        results = await wordle_repo.get_guesses(interaction.user.id)
+        await cast(TextChannel, interaction.channel).send(
+            content=f"Congratulations! {interaction.user.name} \
+                has guess the correct word in {len(results)} guess(es)",
+        )
 
 
 @bot.tree.command(

@@ -92,7 +92,7 @@ class WordleRepo:
         async with self.db.create_session() as session:
             stmt = select(Wordle).where(
                 Wordle.user_id == user_id,
-                Wordle.status != WordleStatus.COMPLETED,
+                Wordle.status != WordleStatus.COMPLETED.value,
             )
             result = await session.execute(stmt)
             wordle: Wordle | None = result.scalar()
@@ -103,7 +103,7 @@ class WordleRepo:
         if wordle is None:
             return None
         match wordle.status:
-            case WordleStatus.ACTIVE:
+            case WordleStatus.ACTIVE.value:
                 guesses = await wordle_repo.get_guesses(wordle.user_id)
                 if len(guesses) < self.TRIVIA_THRESHOLD:
                     return None
@@ -113,11 +113,11 @@ class WordleRepo:
                 if str(MatchResult.CORRECT_LETTER_CORRECT_POSITION) in "".join(
                     recent_results
                 ):
-                    return WordleStatus.PENDING
+                    return WordleStatus.PENDING.value
                 return None
-            case WordleStatus.PENDING:
-                return WordleStatus.ACTIVE
-            case WordleStatus.COMPLETED:
+            case WordleStatus.PENDING.value:
+                return WordleStatus.ACTIVE.value
+            case WordleStatus.COMPLETED.value:
                 return None
             case _:
                 raise ValueError
@@ -127,7 +127,7 @@ class WordleRepo:
     ) -> None:
         """Change the wordle status based on the current guess."""
         next_status = (
-            WordleStatus.COMPLETED
+            WordleStatus.COMPLETED.value
             if is_winning
             else await self._calculate_next_status(id)
         )
