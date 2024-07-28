@@ -65,7 +65,7 @@ class GuessEmbed(Embed):
 class PlayerStatEmbed(Embed):
     """Embed that show the player stats."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         player_id: int,
         player_name: str,
