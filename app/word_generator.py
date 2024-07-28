@@ -144,6 +144,19 @@ class WordGenerator:
             usages=synset.examples(),
         )
 
+    def get_word(self, word: str) -> Word:
+        """Get Word dataclass with the given word."""
+        from nltk.corpus import wordnet
+
+        synset: Synset = wordnet.synsets(word)[0]
+
+        return Word(
+            word=synset.name().split(".", 1)[0],
+            definition=synset.definition(),
+            synonyms={lm.name() for lm in synset.lemmas()},
+            usages=synset.examples(),
+        )
+
     def __str__(self) -> str:
         bank_stat = " | ".join(
             [

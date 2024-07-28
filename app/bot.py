@@ -39,16 +39,6 @@ bot = Bot(settings)
 
 
 @bot.tree.command(
-    name="jam",
-    description="CodeJam Hello World!",
-    guild=Object(id=settings.GUILD_ID),
-)
-async def hello_world(interaction: Interaction[Client]) -> None:
-    """Says hello world."""
-    await interaction.response.send_message("Hello World!")
-
-
-@bot.tree.command(
     name="start-wordle",
     description="Start the wordle game",
     guild=Object(id=settings.GUILD_ID),
@@ -140,8 +130,8 @@ async def guess(interaction: Interaction[Client], word: str) -> None:
         await wordle_game.end(interaction.user.id)
         results = await wordle_repo.get_guesses(interaction.user.id)
         await cast(TextChannel, interaction.channel).send(
-            content=f"Congratulations! {interaction.user.name} \
-                has guess the correct word in {len(results)} guess(es)",
+            content=f"Congratulations! {interaction.user.name}"
+            f"has guess the correct word in {len(results)} guess(es)"
         )
 
 
@@ -209,3 +199,17 @@ async def show_player_stats(interaction: Interaction[Client]) -> None:
             num_guesses,
         )
     )
+
+
+@bot.tree.command(
+    name="help",
+    description="See all the commands.",
+    guild=Object(id=settings.GUILD_ID),
+)
+async def help(interaction: Interaction[Client]) -> None:
+    """Show all the commands."""
+    commands = bot.tree.get_commands(guild=Object(id=settings.GUILD_ID))
+
+    embed = ui.HelpEmbed(commands=commands)
+
+    await interaction.response.send_message(embed=embed)

@@ -3,7 +3,15 @@ from random import shuffle
 from typing import Final
 from uuid import UUID
 
-from discord import Client, Embed, Interaction, Member, SelectOption, User
+from discord import (
+    Client,
+    Embed,
+    Interaction,
+    Member,
+    SelectOption,
+    User,
+)
+from discord.app_commands import Command
 from discord.ui import Select, View
 
 from app.core.wordle import WordleGame
@@ -28,6 +36,7 @@ class GuessEmbed(Embed):
 
     def __init__(self, user: User | Member, guesses: Sequence[Guess]) -> None:
         super().__init__(title=f"{user.name}'s Wordle Guess")
+        self.color = 0xFF0000 if int(guesses[-1].result) != 0 else 0x00FF00
 
         for idx, guess in enumerate(guesses):
             self.add_field(
@@ -96,6 +105,20 @@ class PlayerStatEmbed(Embed):
         )
 
 
+class HelpEmbed(Embed):
+    """Embed for the help comment."""
+
+    def __init__(self, commands: list[Command]) -> None:
+        super().__init__(title="Command Info")
+
+        for command in commands:
+            self.add_field(
+                name=f"/{command.name}",
+                value=f" :right_arrow: {command.description}",
+                inline=False,
+            )
+
+
 class StartSelectionView(View):
     """View that contains all the Select when game start."""
 
@@ -131,8 +154,7 @@ class LengthSelect(Select[StartSelectionView]):
             SelectOption(
                 label=f"{val} letters",
                 value=str(val),
-                # description
-                # emoji
+                description=f"The Wordle Game will be a {val} letters word.",
             )
             for val in range(5, 16)
         ]
@@ -147,7 +169,7 @@ class LengthSelect(Select[StartSelectionView]):
         self.add_option(
             label="Random",
             value="0",
-            description="Choose a random letter word for the Wordle Game",
+            description="Choose a random letter word for the Wordle Game.",
         )
 
     async def callback(self, interaction: Interaction[Client]) -> None:
@@ -247,8 +269,19 @@ class TrivialSelectionView(View):
     async def check_answer(self, interaction: Interaction[Client]) -> None:
         """Check if the selection is same as the answer."""
         if self.select.values[0] == self.CORRECT_VALUE:  # noqa: PD011
-            await interaction.response.send_message("Correct")
+            await interaction.response.send_message("Correct Answer")
         else:
-            await interaction.response.send_message("Wrong")
+            await interaction.response.send_message("Wrong Answer")
 
         await wordle_repo.change_status(id=self.wordle_id, is_winning=False)
+
+        wordle = WordleGame()
+        word = await wordle_repo.get_active_wordle_by_user_id(
+            user_id=interaction.user.id
+        )
+        await interaction.followup.send("Incoming hint ...")
+
+        hint = await wordle.get_hint(
+            user_id=interaction.user.id, word=word.word
+        )
+        await interaction.followup.send(hint)

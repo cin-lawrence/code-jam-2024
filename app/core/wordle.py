@@ -11,7 +11,7 @@ from discord.ui import Select, View
 from app.enums import MatchResult
 from app.storage.guess import guess_repo
 from app.storage.wordle import wordle_repo
-from app.word_generator import Difficulty, WordGenerator, get_wordgen
+from app.word_generator import Difficulty, Word, WordGenerator, get_wordgen
 
 logger = logging.getLogger(__name__)
 
@@ -147,3 +147,28 @@ class WordleGame:
     async def wrong_guess(self, id: UUID) -> None:
         """The previous guess is wrong."""
         await wordle_repo.change_status(id=id, is_winning=False)
+
+    async def get_hint(self, user_id: int, word: str) -> str:
+        """Return hint for the user."""
+        target_word: Word = self.wordgen.get_word(word=word)
+
+        choice = secrets.randbelow(10)
+
+        if choice < 8:  # noqa: PLR2004
+            return await self.get_letter_hint(user_id=user_id)
+        if choice == 8:  # noqa: PLR2004
+            return f"The definition of the word is {target_word.definition}"
+
+        return f"The synonyms of the word are {","
+                .join(target_word.synonyms)}"
+
+    async def get_letter_hint(self, user_id: int) -> str:
+        """Return the correct letter at specific position."""
+        wordle_game = await wordle_repo.get_active_wordle_by_user_id(
+            user_id=user_id
+        )
+        position = secrets.randbelow(len(wordle_game.word))
+
+        return (
+            f"{wordle_game.word[position]} is at the position {position + 1}"
+        )
