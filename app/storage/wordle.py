@@ -134,7 +134,7 @@ class WordleRepo:
             if is_winning
             else await self._calculate_next_status(id)
         )
-        if next_status is not None:
+        if next_status is None:
             return
         logger.info("next status = %s", next_status)
         async with self.db.create_session() as session:
