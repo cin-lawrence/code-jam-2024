@@ -8,6 +8,7 @@ from discord.interactions import Interaction
 
 from .core import ui
 from .core.wordle import UnequalInLengthError, WordleGame
+from .models.wordle import Wordle, WordleStatus
 from .settings import BotSettings, settings
 from .storage.trivia import trivia_repo
 from .storage.wordle import wordle_repo
@@ -80,63 +81,62 @@ async def guess(interaction: Interaction[Client], word: str) -> None:
         )
         return
 
-    active_wordle = await wordle_repo.get_active_wordle_by_user_id(
-        user_id=interaction.user.id
+    wordle: Wordle | None = await wordle_repo.get_ongoing_wordle(
+        interaction.user.id,
     )
-    if active_wordle:
-        try:
-            await wordle.guess(
-                user_id=interaction.user.id,
-                guess=word.upper(),
-            )
-        except UnequalInLengthError:
-            message = "The length of guess and the word are not the same"
-            await interaction.response.send_message(content=message)
-        else:
-            embed = ui.GuessEmbed(
-                user=interaction.user,
-                guesses=await wordle_repo.get_guesses(
-                    user_id=interaction.user.id
-                ),
-            )
+    if wordle is None:
+        message = "Please start the wordle game before making a guess."
+        await interaction.response.send_message(message)
+        return
 
-            await interaction.response.send_message(embed=embed)
+    match wordle.status:
+        case WordleStatus.ACTIVE:
+            try:
+                await wordle.guess(
+                    user_id=interaction.user.id,
+                    guess=word.upper(),
+                )
+            except UnequalInLengthError:
+                message = "The length of guess and the word are not the same"
+                await interaction.response.send_message(content=message)
+                return
+            else:
+                embed = ui.GuessEmbed(
+                    user=interaction.user,
+                    guesses=await wordle_repo.get_guesses(
+                        user_id=interaction.user.id
+                    ),
+                )
 
-    else:
-        pending_wordle = await wordle_repo.get_pending_wordle(
-            user_id=interaction.user.id
-        )
-        if pending_wordle:
+                await interaction.response.send_message(embed=embed)
+        case WordleStatus.PENDING:
             message = (
                 "Please complete the trivia question first "
                 "before continue guessing"
             )
-        else:
-            message = "Please start the wordle game before making a guess."
-
-        await interaction.response.send_message(message)
-        return
+            await interaction.response.send_message(message)
+            return
+        case _:
+            return
 
     results = await wordle_repo.get_guesses(interaction.user.id)
-    if await wordle.check_guess(interaction.user.id):
-        await wordle.end(interaction.user.id)
+    if not (await wordle.check_guess(interaction.user.id)):
+        await wordle.wrong_guess(id=wordle.id)
+        wordle = await wordle_repo.get_pending_wordle(interaction.user.id)
 
-        await cast(TextChannel, interaction.channel).send(
-            content=f"Congratulations! {interaction.user.name} \
-                has guess the correct word in {len(results)} guess(es)",
-        )
-    else:
-        await wordle.wrong_guess(id=active_wordle.id)
-        pending_wordle = await wordle_repo.get_pending_wordle(
-            user_id=interaction.user.id
-        )
-
-        if pending_wordle:
+        if wordle:
             wordle_game = await wordle_repo.get_pending_wordle(
                 user_id=interaction.user.id
             )
             assert wordle_game, "no pending wordle game"
             await trivial(interaction=interaction, wordle_id=wordle_game.id)
+            return
+
+    await wordle.end(interaction.user.id)
+    await cast(TextChannel, interaction.channel).send(
+        content=f"Congratulations! {interaction.user.name} \
+            has guess the correct word in {len(results)} guess(es)",
+    )
 
 
 @bot.tree.command(
