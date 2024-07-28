@@ -110,9 +110,9 @@ class WordleRepo:
                 recent_results = [
                     guess.result for guess in guesses[-self.TRIVIA_THRESHOLD :]
                 ]
-                if str(MatchResult.CORRECT_LETTER_CORRECT_POSITION) in "".join(
-                    recent_results
-                ):
+                if str(
+                    MatchResult.CORRECT_LETTER_CORRECT_POSITION
+                ) not in "".join(recent_results):
                     return WordleStatus.PENDING.value
                 return None
             case WordleStatus.PENDING.value:
