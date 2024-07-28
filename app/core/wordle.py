@@ -95,7 +95,13 @@ class WordleGame:
             difficulty=Difficulty(difficulty_select.values[0]),  # noqa:PD011
         )
         print(word)
-        message = "You word is chosen. You can start guessing the word now"
+        message = "You word is chosen."
+        message += (
+            f"The word has {len(word)} letters."
+            if length_select.values[0] == "0"  # noqa:PD011
+            else ""
+        )
+        message += "You can start guessing the word now."
 
         await wordle_repo.create(word, interaction.user.id)
         await interaction.response.send_message(content=message)
