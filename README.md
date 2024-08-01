@@ -1,6 +1,6 @@
 # Mordle
 Wordle with more fun and more information.
-See more in this slide to acknowledge all of its functionalities.
+See more in [this slide](https://www.google.com) to acknowledge all of its functionalities.
 
 ## Installation
 Mordle requires only several dependencies to run, be sure to clone it first:
@@ -13,12 +13,14 @@ To create a Bot account, see more [here](https://discordpy.readthedocs.io/en/sta
 
 Upon creating a Bot account and a Discord server, retrieve the Bot token and the server ID (see `Server Settings > Widget > Server ID`, then copy it).
 
+**The application can be installed using either of 2 ways below.**
+
 ### In the host machine
 Change your working directory to the project's root folder.
 ```
 cd code-jam-2024
 ```
-Install the dependencies. _It would be nicer if you had a virtual environment._
+Install the dependencies. _It could be nicer if you have a virtual environment._
 ```
 pip install -r requirements-dev.txt
 ```
@@ -63,7 +65,7 @@ docker run --env-file ./config/app/.env mikosurge/mordle:v0.0.1
 ```
 
 ## The Ornate Orbits team
-- *@Atonement*: repository setup, first bot implementation, code refactoring, trivia crawling, commits, and PRs managing.
-- *@Xerif*: main game logic, most of the commands, slideshow creator.
-- *@kvothe*: some nltk, crawling, math, and trivia logic.
-- *@Bh*: tests writing, bug fixing.
+- **@Atonement**: repository setup, first bot implementation, code refactoring, trivia crawling, commits, and PRs managing.
+- **@Xerif**: main game logic, most of the commands, slideshow creator.
+- **@kvothe**: some nltk, crawling, math, and trivia logic.
+- **@Bh**: tests writing, bug fixing.
