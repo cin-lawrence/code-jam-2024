@@ -1,6 +1,6 @@
 # Mordle
 Wordle with more fun and more information.
-See more in [this slide](https://www.google.com) to acknowledge all of its functionalities.
+See more in [this slide](https://docs.google.com/presentation/d/1cCAn2Ggavuf-VrAuh-mOnEE_v00eoi68kCEKvENDXug/edit?usp=sharing) to acknowledge all of its functionalities.
 
 ## Installation
 Mordle requires only several dependencies to run, be sure to clone it first:
