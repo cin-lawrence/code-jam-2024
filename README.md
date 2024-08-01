@@ -7,15 +7,18 @@ Mordle requires only several dependencies to run, be sure to clone it first:
 ```
 git clone git@github.com:cin-lawrence/code-jam-2024
 ```
-Ensure you have a Bot account and a server to run the Bot. To create a Bot account, see more [here](https://discordpy.readthedocs.io/en/stable/discord.html#creating-a-bot-account).
+Ensure you have a Bot account and a server to run the Bot.
+
+To create a Bot account, see more [here](https://discordpy.readthedocs.io/en/stable/discord.html#creating-a-bot-account).
+
 Upon creating a Bot account and a Discord server, retrieve the Bot token and the server ID (see `Server Settings > Widget > Server ID`, then copy it).
 
-## In the host machine
+### In the host machine
 Change your working directory to the project's root folder.
 ```
 cd code-jam-2024
 ```
-Install the dependencies. It would be nicer if you had a virtual environment.
+Install the dependencies. _It would be nicer if you had a virtual environment._
 ```
 pip install -r requirements-dev.txt
 ```
@@ -29,9 +32,13 @@ Run the application from the current working directory.
 python -m app.main
 ```
 
-## Using Docker
-Docker encapsulates all requirements needed for the application. Though more advanced, this is the recommended way to run the app.
+### Using Docker
+Docker encapsulates all requirements needed for the application.
+
+Though more advanced, this is the recommended way to run the app.
+
 Follow the [official documentation](https://docs.docker.com/get-docker/) to install Docker.
+
 Rename the `.env` in `./config` folder,
 ```
 mv ./config/app/.env.example ./config/app/.env
@@ -55,8 +62,8 @@ If you want to use the pre-built image:
 docker run --env-file ./config/app/.env mikosurge/mordle:v0.0.1
 ```
 
-# The Ornate Orbits team
-- Atonement: repository setup, first bot implementation, code refactoring, trivia crawling, commits, and PRs managing.
-- Xerif: main game logic, most of the commands, slideshow creator.
-- kvothe: some nltk, crawling, math, and trivia logic.
-- Bh: tests writing, bug fixing.
+## The Ornate Orbits team
+- *@Atonement*: repository setup, first bot implementation, code refactoring, trivia crawling, commits, and PRs managing.
+- *@Xerif*: main game logic, most of the commands, slideshow creator.
+- *@kvothe*: some nltk, crawling, math, and trivia logic.
+- *@Bh*: tests writing, bug fixing.
